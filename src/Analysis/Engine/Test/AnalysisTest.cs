@@ -7683,6 +7683,23 @@ e = Employee('Guido')
             }
         }
 
+        [TestMethod]
+        public async Task InheritNamedTupleMembers() {
+            var code = @"
+from collections import namedtuple
+
+class Fields(namedtuple('TupleName', ['a', 'b'])):
+    pass
+
+f = Fields()
+";
+            using (var server = await CreateServerAsync(PythonVersions.LatestAvailable)) {
+                var analysis = await server.OpenDefaultDocumentAndGetAnalysisAsync(code);
+                analysis.Should().HaveVariable("f").WithValue<IInstanceInfo>()
+                    .Which.Should().HaveOnlyMembers("a", "b", "__doc__", "__class__");
+            }
+        }
+
         [TestMethod, Priority(0)]
         public async Task CrossModuleUnassignedImport() {
             using (var server = await CreateServerAsync(PythonVersions.LatestAvailable)) {
