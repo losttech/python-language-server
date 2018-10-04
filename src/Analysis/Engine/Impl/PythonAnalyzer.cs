@@ -147,6 +147,7 @@ namespace Microsoft.PythonTools.Analysis {
 
             Modules.AddBuiltinModuleWrapper("sys", SysModuleInfo.Wrap);
             Modules.AddBuiltinModuleWrapper("typing", TypingModuleInfo.Wrap);
+            Modules.AddBuiltinModuleWrapper("collections", CollectionsModuleInfo.Wrap);
 
             _knownTypes = KnownTypes.Create(this, fallback);
 
