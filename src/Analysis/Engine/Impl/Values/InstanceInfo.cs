@@ -95,7 +95,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public IReadOnlyDictionary<string, VariableDef> InstanceAttributes 
             => _instanceAttrs.ToDictionary(k => k.Key, v => v.Value);
         IReadOnlyDictionary<string, IVariableDefinition> IInstanceInfo.InstanceAttributes
-            => InstanceAttributes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value as IVariableDefinition);
+            => InstanceAttributes?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value as IVariableDefinition);
 
         public PythonAnalyzer ProjectState => ClassInfo.AnalysisUnit.State;
 
