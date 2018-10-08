@@ -21,6 +21,8 @@ using Microsoft.PythonTools.Interpreter;
 using Microsoft.PythonTools.Parsing.Ast;
 
 namespace Microsoft.PythonTools.Analysis.Values {
+    using System.Diagnostics;
+
     /// <summary>
     /// Base class for things which get their members primarily via a built-in .NET type.
     /// </summary>
@@ -37,6 +39,9 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public override IAnalysisSet GetTypeMember(Node node, AnalysisUnit unit, string name) {
+            if (unit == null) throw new ArgumentNullException(nameof(unit));
+            if (name == null) throw new ArgumentNullException(nameof(name));
+
             var res = AnalysisSet.Empty;
 
             IAnalysisSet specializedRes;
