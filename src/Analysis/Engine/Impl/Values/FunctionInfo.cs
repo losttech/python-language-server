@@ -96,7 +96,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
             }
 
             var res = DoCall(node, unit, _analysisUnit, callArgs);
-            if (_derived != null) {
+            if (_derived != null && Name != "__init__" && Name != "__new__" ) {
                 foreach (FunctionInfo derived in _derived) {
                     var derivedResult = derived.DoCall(node, unit, derived._analysisUnit, callArgs);
                     res = res.Union(derivedResult);
@@ -104,7 +104,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
             }
 
             if (_analysisUnit.State.Limits.PropagateParameterTypeToBaseMethods
-                && _analysisUnit.Scope.OuterScope is ClassScope parentClass) {
+                && _analysisUnit.Scope.OuterScope is ClassScope parentClass
+                && Name != "__init__" && Name != "__new__") {
                 var baseMethods = DDG.LookupBaseMethods(Name, parentClass.Class.Mro, AnalysisUnit.Ast, AnalysisUnit);
                 foreach (FunctionInfo baseMethod in baseMethods.OfType<FunctionInfo>()) {
                     baseMethod.DoCall(node, unit, baseMethod._analysisUnit, callArgs);
