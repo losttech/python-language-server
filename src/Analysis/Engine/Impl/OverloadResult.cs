@@ -299,9 +299,7 @@ namespace Microsoft.PythonTools.Analysis {
 
         public override string Documentation {
             get {
-                if (_docTask != null) {
-                    _docTask.Wait(200);
-                }
+                _docTask?.Wait(200);
                 return _doc;
             }
         }
