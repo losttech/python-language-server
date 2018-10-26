@@ -584,7 +584,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             var function = fnScope.Function;
             var analysisUnit = (FunctionAnalysisUnit)function.AnalysisUnit;
 
-            if (Scope.OuterScope is ClassScope curClass) {
+            if (Scope.OuterScope is ClassScope curClass && function.Name != "__init__" && function.Name != "__new__") {
                 var bases = LookupBaseMethods(
                     analysisUnit.Ast.Name,
                     curClass.Class.Mro,
