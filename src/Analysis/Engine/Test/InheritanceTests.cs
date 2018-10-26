@@ -60,6 +60,25 @@ b = a.virt";
             analysis.Should().HaveVariable("b").OfTypes(BuiltinTypeId.Int, BuiltinTypeId.Function);
         }
 
+
+        [TestMethod]
+        public async Task NewInheritedFromNamedTuple() {
+            var code = @"
+import collections
+
+class A(collections.namedtuple('A', [])):
+  def __new__(cls):
+    return super(A, cls).__new__(cls)
+
+a = A()";
+
+            using (var server = await new Server().InitializeAsync(PythonVersions.Required_Python36X)) {
+                var analysis = await server.OpenDefaultDocumentAndGetAnalysisAsync(code);
+
+                analysis.Should().HaveVariable("a").OfType(className: "A");
+            }
+        }
+
         [ServerTestMethod(Version = PythonLanguageVersion.V36), Priority(0)]
         public async Task ParameterTypesPropagateToDerivedFunctions(Server server) {
             var code = @"
