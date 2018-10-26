@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.PythonTools.Analysis.Analyzer;
+using Microsoft.PythonTools.Analysis.AnalysisSetDetails;
 using Microsoft.PythonTools.Analysis.Infrastructure;
 using Microsoft.PythonTools.Interpreter;
 using Microsoft.PythonTools.Parsing;
@@ -145,6 +146,11 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 CallArgs = callArgs,
                 CallSite = node
             };
+
+            // TODO: this should find cls parameter properly
+            if (res.Count == 0 && args.Length > 0 && Name == "__new__" && args[0] is ClassInfo cls) {
+                res = new AnalysisSetOneObject(cls.Instance);
+            }
 
             var r = res.Resolve(unit, context, out _);
             return r;
