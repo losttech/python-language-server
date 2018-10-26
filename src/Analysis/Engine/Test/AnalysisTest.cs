@@ -2839,6 +2839,22 @@ f = x().g", 6, "g", DisplayName = "class x, def g")]
             }
         }
 
+        [TestMethod]
+        public async Task OmittedKeywordArguments() {
+            var code = @"
+def f(i=0, s=''):
+    pass
+
+f(s='hi')";
+
+            using (var server = await CreateServerAsync()) {
+                await server.OpenDefaultDocumentAndGetAnalysisAsync(code);
+                var signatures = await server.SendSignatureHelp(TestData.GetDefaultModuleUri(), 1, 4);
+
+                signatures.Should().OnlyHaveSignature($"f(i: int, s: str)");
+            }
+        }
+
         [TestMethod, Priority(0)]
         public async Task BadKeywordArguments() {
             var code = @"def f(a, b):
