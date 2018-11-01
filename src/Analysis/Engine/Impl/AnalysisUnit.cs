@@ -74,7 +74,7 @@ namespace Microsoft.PythonTools.Analysis {
         /// </summary>
         internal readonly bool ForEval;
 
-        public virtual bool IsAlive => _scope?.AnalysisValue?.IsAlive ?? true;
+        public bool IsAlive => _scope?.AnalysisValue?.IsAlive ?? true;
 
         internal virtual ModuleInfo GetDeclaringModule() {
             if (_scope != null) {
