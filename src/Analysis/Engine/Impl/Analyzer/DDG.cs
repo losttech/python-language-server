@@ -123,6 +123,18 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 }
             }
 
+            string annotationModuleName = _unit.DeclaringModule.Name + PythonAnalyzer.AnnotationsModuleSuffix;
+            if (ProjectState.Modules.TryGetImportedModule(annotationModuleName, out var _)
+                && TryImportModule(annotationModuleName, true, out var annotationsReference, out var _)) {
+                annotationsReference.Module.Imported(_unit);
+
+                if (ProjectState.Modules.TryGetImportedModule(annotationModuleName, out annotationsReference)) {
+                    FinishImportModuleOrMember(annotationsReference, attribute: null, name: "__pyi__",
+                        addRef: true, node: node, nameReference: new NameExpression("__pyi__"));
+                } else
+                    Debug.Fail($"Failed to get module {annotationModuleName} we just imported");
+            }
+
             return base.Walk(node);
         }
 

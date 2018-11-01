@@ -38,6 +38,7 @@ namespace Microsoft.PythonTools.Analysis {
     /// </summary>
     public partial class PythonAnalyzer : IPythonAnalyzer, IDisposable {
         public const string PythonAnalysisSource = "Python";
+        internal const string AnnotationsModuleSuffix = "__pyi__";
         private static object _nullKey = new object();
 
         private readonly PathResolver _pathResolver;
@@ -196,6 +197,33 @@ namespace Microsoft.PythonTools.Analysis {
                 Modules.SetModule(moduleName, entry.MyScope);
                 DoDelayedSpecialization(moduleName);
             }
+            if (filePath != null) {
+                ModulesByFilename[filePath] = entry.MyScope;
+            }
+            return entry;
+        }
+
+        /// <summary>
+        /// Adds a new annotations file to the list of available annotation files and returns a ProjectEntry object.
+        /// 
+        /// This method is thread safe.
+        /// </summary>
+        /// <param name="moduleName">The name of the module; used to associate with imports</param>
+        /// <param name="filePath">The path to the file on disk</param>
+        /// <param name="cookie">An application-specific identifier for the module</param>
+        /// <returns>The project entry for the new module.</returns>
+        public IPythonProjectEntry AddModuleAnnotations(string moduleName, string filePath, Uri documentUri = null, IAnalysisCookie cookie = null) {
+            if (moduleName == null)
+                throw new ArgumentNullException(nameof(moduleName));
+
+            moduleName += AnnotationsModuleSuffix;
+            var entry = new ProjectEntry(this, moduleName, filePath, documentUri, cookie);
+
+            var moduleRef = Modules.GetOrAdd(moduleName);
+            moduleRef.Module = entry.MyScope;
+
+            DoDelayedSpecialization(moduleName);
+
             if (filePath != null) {
                 ModulesByFilename[filePath] = entry.MyScope;
             }
