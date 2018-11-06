@@ -14,6 +14,7 @@
 // See the Apache Version 2.0 License for specific language governing
 // permissions and limitations under the License.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -195,11 +196,13 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
         internal void AnalyzeDefaultParameters(DDG ddg) {
             IVariableDefinition param;
-            var scope = (FunctionScope)Scope;
             var annotationAnalysis = GetExternalAnnotationAnalysisUnit() as FunctionAnalysisUnit;
             var functionAnnotation = annotationAnalysis?.Function.FunctionDefinition;
             if (functionAnnotation?.Parameters.Length != Ast.Parameters.Length)
                 functionAnnotation = null;
+
+            AnalysisValue[] baseMethods = null;
+
             for (var i = 0; i < Ast.Parameters.Length; ++i) {
                 var p = Ast.Parameters[i];
                 var annotation = p.Annotation;
@@ -215,23 +218,15 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     }
                 }
 
-                if (annotationValue?.Any() == true && Scope.TryGetVariable(p.Name, out param)) {
-                    param.AddTypes(this, annotationValue, false);
-                    var vd = scope.GetParameter(p.Name);
-                    if (vd != null && vd != param) {
-                        vd.AddTypes(this, annotationValue, false);
-                    }
+                if (annotationValue?.Any() == true) {
+                    AddParameterTypes(p.Name, annotationValue, ref baseMethods);
                 }
 
                 if (p.DefaultValue != null && p.Kind != ParameterKind.List && p.Kind != ParameterKind.Dictionary &&
                     Scope.TryGetVariable(p.Name, out param)) {
                     var val = ddg._eval.Evaluate(p.DefaultValue);
                     if (val != null) {
-                        param.AddTypes(this, val, false);
-                        var vd = scope.GetParameter(p.Name);
-                        if (vd != null && vd != param) {
-                            vd.AddTypes(this, val, false);
-                        }
+                        AddParameterTypes(p.Name, val, ref baseMethods);
                     }
                 }
             }
@@ -265,8 +260,70 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         ddg._unit,
                         resType
                     );
+
+                    if (Function.Name != "__init__" && Function.Name != "__new__") {
+                        baseMethods = baseMethods ?? GetBaseMethods();
+
+                        foreach (var baseMethod in baseMethods.OfType<FunctionInfo>()) {
+                            var baseAnalysisUnit = (FunctionAnalysisUnit)baseMethod.AnalysisUnit;
+                            baseAnalysisUnit.FunctionScope.AddReturnTypes(Ast.ReturnAnnotation, ddg._unit, resType);
+                        }
+
+                        if (State.Limits.PropagateParameterTypeToBaseMethods) {
+                            foreach (var derivedMethod in Function.Derived ?? Array.Empty<FunctionInfo>()) {
+                                var derivedAnalysisUnit = (FunctionAnalysisUnit)derivedMethod.AnalysisUnit;
+                                derivedAnalysisUnit.ReturnValue.AddTypes(this, resType);
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        private FunctionScope FunctionScope => (FunctionScope)Scope;
+
+        private bool AddParameterTypes(FunctionScope functionScope, string name, IAnalysisSet types) {
+            if (!functionScope.TryGetVariable(name, out var param))
+                return false;
+            param.AddTypes(this, types, false);
+            var vd = functionScope.GetParameter(name);
+            if (vd != null && vd != param) {
+                vd.AddTypes(this, types, false);
+            }
+            return true;
+        }
+
+        private bool AddParameterTypes(string name, IAnalysisSet types, ref AnalysisValue[] baseMethods) {
+            var functionScope = FunctionScope;
+            if (!AddParameterTypes(functionScope, name, types)) {
+                return false;
+            }
+
+            if (Function.Name == "__init__" || Function.Name == "__new__") {
+                return true;
+            }
+
+            if (State.Limits.PropagateParameterTypeToBaseMethods) {
+                baseMethods = baseMethods ?? GetBaseMethods();
+
+                foreach (var baseMethod in baseMethods.OfType<FunctionInfo>()) {
+                    var baseAnalysisUnit = (FunctionAnalysisUnit)baseMethod.AnalysisUnit;
+                    AddParameterTypes(baseAnalysisUnit.FunctionScope, name, types);
+                }
+            }
+
+            foreach (var derivedMethod in Function.Derived ?? Array.Empty<FunctionInfo>()) {
+                var derivedAnalysisUnit = (FunctionAnalysisUnit)derivedMethod.AnalysisUnit;
+                AddParameterTypes(derivedAnalysisUnit.FunctionScope, name, types);
+            }
+
+            return true;
+        }
+
+        private AnalysisValue[] GetBaseMethods() {
+            return Scope?.OuterScope is ClassScope @class
+                ? DDG.LookupBaseMethods(Function.Name, @class.Class.Mro, Ast, this).ToArray()
+                : Array.Empty<AnalysisValue>();
         }
 
         public override string ToString() {
