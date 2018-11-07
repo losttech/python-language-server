@@ -166,7 +166,9 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return base.Equals(obj);
         }
 
-        public override int GetHashCode() => base.GetHashCode() ^ Overloads.GetHashCode();
+        public override int GetHashCode() => base.GetHashCode()
+            // incomplete workaround for https://github.com/Microsoft/python-language-server/issues/359
+            ^ Overloads.Aggregate(654754754, (h, o) => h ^ o.GetHashCode());
 
         private IPythonFunctionOverload[] GetFunctionOverloads() {
             if (_overloads == null) {
