@@ -187,7 +187,27 @@ namespace Microsoft.PythonTools.Analysis.Values {
             _derived = _derived ?? new HashSet<FunctionInfo>();
 
             bool @new = _derived.Add(derived);
-            // TODO: do we need to re-queue this function analysis if a new derived was added?
+            if (@new) {
+                // TODO: do we need to re-queue this function analysis if a new derived was added?
+                // seems like this will not spread fully
+                for (int i = 0; i < FunctionDefinition.ArgCount; i++) {
+                    Parameter parameterDefinition = FunctionDefinition.Parameters[i];
+                    var parameter = ((FunctionScope)_analysisUnit.Scope).GetParameter(parameterDefinition.Name);
+                    var derivedParameter = ((FunctionScope)derived._analysisUnit.Scope).GetParameter(parameterDefinition.Name);
+                    
+                    derivedParameter?.AddTypes(_analysisUnit, parameter.Types);
+
+                    if (derivedParameter != null && ProjectState.Limits.PropagateParameterTypeToBaseMethods) {
+                        parameter.AddTypes(derived._analysisUnit, derivedParameter.Types);
+                    }
+                }
+
+                _analysisUnit.ReturnValue.AddTypes(derived._analysisUnit, derived._analysisUnit.ReturnValue.Types);
+
+                if (ProjectState.Limits.PropagateReturnTypesToDerivedMethods) {
+                    derived._analysisUnit.ReturnValue.AddTypes(_analysisUnit, _analysisUnit.ReturnValue.Types);
+                }
+            }
             return @new;
         }
 
