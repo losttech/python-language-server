@@ -584,11 +584,29 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     curClass.Class.Mro,
                     analysisUnit.Ast,
                     analysisUnit
-                );
+                ).OfType<FunctionInfo>().ToList();
 
-                foreach (FunctionInfo baseFunction in bases.OfType<FunctionInfo>()) {
+                foreach (FunctionInfo baseFunction in bases) {
                     var baseAnalysisUnit = (FunctionAnalysisUnit)baseFunction.AnalysisUnit;
                     baseAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
+
+                    if (ProjectState.Limits.PropagateParameterTypeToBaseMethods && baseFunction.Derived != null) {
+                        foreach (FunctionInfo derivedFromBase in baseFunction.Derived) {
+                            if (ReferenceEquals(derivedFromBase, function)
+                                || bases.Any(f => ReferenceEquals(f, derivedFromBase)))
+                                continue;
+
+                            var derivedAnalysisUnit = (FunctionAnalysisUnit)derivedFromBase.AnalysisUnit;
+                            derivedAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
+                        }
+                    }
+                }
+
+                if (ProjectState.Limits.PropagateReturnTypesToDerivedMethods && function.Derived != null) {
+                    foreach (FunctionInfo derived in function.Derived) {
+                        var derivedAnalysisUnit = (FunctionAnalysisUnit)derived.AnalysisUnit;
+                        derivedAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
+                    }
                 }
             }
             return true;

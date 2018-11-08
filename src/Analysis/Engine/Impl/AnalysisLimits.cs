@@ -187,6 +187,12 @@ namespace Microsoft.PythonTools.Analysis {
         public bool PropagateParameterTypeToBaseMethods { get; set; }
 
         /// <summary>
+        /// <c>True</c> to propagate return types to derived methods.
+        /// Return types always propagate to base methods.
+        /// </summary>
+        public bool PropagateReturnTypesToDerivedMethods { get; set; }
+
+        /// <summary>
         /// True to read information from type stub packages.
         /// </summary>
         public bool UseTypeStubPackages { get; set; }
