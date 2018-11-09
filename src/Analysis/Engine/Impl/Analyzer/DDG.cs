@@ -576,37 +576,13 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             fnScope.AddReturnTypes(node, _unit, lookupRes);
 
             var function = fnScope.Function;
-            var analysisUnit = (FunctionAnalysisUnit)function.AnalysisUnit;
 
-            if (Scope.OuterScope is ClassScope curClass && function.Name != "__init__" && function.Name != "__new__") {
-                var bases = LookupBaseMethods(
-                    analysisUnit.Ast.Name,
-                    curClass.Class.Mro,
-                    analysisUnit.Ast,
-                    analysisUnit
-                ).OfType<FunctionInfo>().ToList();
+            if (function.Name != "__init__" && function.Name != "__new__") {
+                var linked = function.TraverseTransitivelyLinked(f => f.GetReturnTypePropagationLinks());
 
-                foreach (FunctionInfo baseFunction in bases) {
-                    var baseAnalysisUnit = (FunctionAnalysisUnit)baseFunction.AnalysisUnit;
-                    baseAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
-
-                    if (ProjectState.Limits.PropagateParameterTypeToBaseMethods && baseFunction.Derived != null) {
-                        foreach (FunctionInfo derivedFromBase in baseFunction.Derived) {
-                            if (ReferenceEquals(derivedFromBase, function)
-                                || bases.Any(f => ReferenceEquals(f, derivedFromBase)))
-                                continue;
-
-                            var derivedAnalysisUnit = (FunctionAnalysisUnit)derivedFromBase.AnalysisUnit;
-                            derivedAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
-                        }
-                    }
-                }
-
-                if (ProjectState.Limits.PropagateReturnTypesToDerivedMethods && function.Derived != null) {
-                    foreach (FunctionInfo derived in function.Derived) {
-                        var derivedAnalysisUnit = (FunctionAnalysisUnit)derived.AnalysisUnit;
-                        derivedAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
-                    }
+                foreach (FunctionInfo linkedFunction in linked) {
+                    var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction.AnalysisUnit;
+                    linkedAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
                 }
             }
             return true;

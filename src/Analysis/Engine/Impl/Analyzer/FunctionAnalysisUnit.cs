@@ -201,8 +201,6 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             if (functionAnnotation?.Parameters.Length != Ast.Parameters.Length)
                 functionAnnotation = null;
 
-            AnalysisValue[] baseMethods = null;
-
             for (var i = 0; i < Ast.Parameters.Length; ++i) {
                 var p = Ast.Parameters[i];
                 var annotation = p.Annotation;
@@ -219,14 +217,14 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 }
 
                 if (annotationValue?.Any() == true) {
-                    AddParameterTypes(p.Name, annotationValue, ref baseMethods);
+                    AddParameterTypes(p.Name, annotationValue);
                 }
 
                 if (p.DefaultValue != null && p.Kind != ParameterKind.List && p.Kind != ParameterKind.Dictionary &&
                     Scope.TryGetVariable(p.Name, out param)) {
                     var val = ddg._eval.Evaluate(p.DefaultValue);
                     if (val != null) {
-                        AddParameterTypes(p.Name, val, ref baseMethods);
+                        AddParameterTypes(p.Name, val);
                     }
                 }
             }
@@ -262,18 +260,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     );
 
                     if (Function.Name != "__init__" && Function.Name != "__new__") {
-                        baseMethods = baseMethods ?? GetBaseMethods();
-
-                        foreach (var baseMethod in baseMethods.OfType<FunctionInfo>()) {
-                            var baseAnalysisUnit = (FunctionAnalysisUnit)baseMethod.AnalysisUnit;
-                            baseAnalysisUnit.FunctionScope.AddReturnTypes(Ast.ReturnAnnotation, ddg._unit, resType);
-                        }
-
-                        if (State.Limits.PropagateParameterTypeToBaseMethods) {
-                            foreach (var derivedMethod in Function.Derived ?? Array.Empty<FunctionInfo>()) {
-                                var derivedAnalysisUnit = (FunctionAnalysisUnit)derivedMethod.AnalysisUnit;
-                                derivedAnalysisUnit.ReturnValue.AddTypes(this, resType);
-                            }
+                        var linked = Function.TraverseTransitivelyLinked(f => f.GetReturnTypePropagationLinks());
+                        foreach (FunctionInfo linkedFunction in linked) {
+                            var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction.AnalysisUnit;
+                            linkedAnalysisUnit.FunctionScope.AddReturnTypes(Ast.ReturnAnnotation, ddg._unit, resType);
                         }
                     }
                 }
@@ -293,7 +283,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             return true;
         }
 
-        private bool AddParameterTypes(string name, IAnalysisSet types, ref AnalysisValue[] baseMethods) {
+        private bool AddParameterTypes(string name, IAnalysisSet types) {
             var functionScope = FunctionScope;
             if (!AddParameterTypes(functionScope, name, types)) {
                 return false;
@@ -303,18 +293,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 return true;
             }
 
-            if (State.Limits.PropagateParameterTypeToBaseMethods) {
-                baseMethods = baseMethods ?? GetBaseMethods();
-
-                foreach (var baseMethod in baseMethods.OfType<FunctionInfo>()) {
-                    var baseAnalysisUnit = (FunctionAnalysisUnit)baseMethod.AnalysisUnit;
-                    AddParameterTypes(baseAnalysisUnit.FunctionScope, name, types);
-                }
-            }
-
-            foreach (var derivedMethod in Function.Derived ?? Array.Empty<FunctionInfo>()) {
-                var derivedAnalysisUnit = (FunctionAnalysisUnit)derivedMethod.AnalysisUnit;
-                AddParameterTypes(derivedAnalysisUnit.FunctionScope, name, types);
+            var linked = Function.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks());
+            foreach (FunctionInfo linkedFunction in linked) {
+                var linkedFunctionAnalysisUnit = (FunctionAnalysisUnit)linkedFunction.AnalysisUnit;
+                AddParameterTypes(linkedFunctionAnalysisUnit.FunctionScope, name, types);
             }
 
             return true;
