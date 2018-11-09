@@ -183,11 +183,16 @@ namespace Microsoft.PythonTools.Analysis.Values {
         internal bool AddDerived(FunctionInfo derived) {
             if (derived == null) throw new ArgumentNullException(nameof(derived));
 
-            _derived = _derived ?? new HashSet<FunctionInfo>();
+            _derived = _derived ?? new HashSet<FunctionInfo>(ReferenceComparer.Instance);
 
             bool @new = _derived.Add(derived);
             // TODO: do we need to re-queue this function analysis if a new derived was added?
-            if (@new) {
+            if (@new && Name != "__init__" && Name != "__new__") {
+                // this block adds about 25% to execution time
+                // it can be optimized by limiting propagation:
+                // 1. stop traversing link graphs at nodes when propagation does not change anything
+                // 2. limit do not propagate from derived to even more derived, and from current to more base
+                // (should be subdued by 1)
                 PropagateParameterTypes();
                 PropagateReturnType();
 
