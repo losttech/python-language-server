@@ -77,6 +77,31 @@ namespace Microsoft.PythonTools.Analysis.Infrastructure {
             }
         }
 
+        /// <summary>
+        /// Enumerates every transitively linked object in the object graph, starting with <paramref name="root"/>.
+        /// <para/>
+        /// <paramref name="root"/> itself is excluded. Each object is only visited once.
+        /// <para/>
+        /// Traversal order is not defined.
+        /// </summary>
+        public static IEnumerable<T> TraverseTransitivelyLinked<T>(this T root, Func<T, IEnumerable<T>> selectLinked)
+            where T: class {
+            var traversed = new HashSet<T>(ReferenceComparer.Instance){ root };
+            var items = new Queue<T>(selectLinked(root));
+            while (items.Count > 0) {
+                var item = items.Dequeue();
+                if (!traversed.Add(item))
+                    continue;
+
+                yield return item;
+
+                var children = selectLinked(item);
+                foreach (T child in children) {
+                    items.Enqueue(child);
+                }
+            }
+        }
+
         public static IEnumerable<T> TraverseBreadthFirst<T>(this T root, Func<T, IEnumerable<T>> selectChildren) {
             var items = new Queue<T>();
             items.Enqueue(root);
