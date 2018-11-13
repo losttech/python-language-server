@@ -226,6 +226,9 @@ namespace Microsoft.PythonTools.Analysis {
 #endif
 
         public bool AddTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
+            if (newTypes.Count == 0)
+                return false;
+
             object dummy;
             if (LockedVariableDefs.TryGetValue(this, out dummy)) {
                 return false;
