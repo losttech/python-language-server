@@ -264,8 +264,8 @@ namespace Microsoft.PythonTools.Analysis.AnalysisSetDetails {
 
         public IAnalysisSet Clone() {
             var res = new AnalysisHashSet(Comparer);
-            using (var e = GetEnumerator()) {
-                res.AddFromEnumerator(e);
+            lock (this) {
+                res._buckets = _buckets.Clone();
             }
             return res;
         }
@@ -559,9 +559,16 @@ namespace Microsoft.PythonTools.Analysis.AnalysisSetDetails {
                 }
             }
 
+            private BucketSet(Bucket[] buckets, int count) {
+                Buckets = buckets;
+                Count = count;
+            }
+
             public readonly Bucket[] Buckets;
             public int Count;
             public int Capacity => Buckets?.Length ?? 0;
+
+            public BucketSet Clone() => new BucketSet((Bucket[])Buckets?.Clone(), Count);
         }
 
         IEnumerator IEnumerable.GetEnumerator() {
