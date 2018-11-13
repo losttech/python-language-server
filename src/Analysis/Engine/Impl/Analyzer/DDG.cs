@@ -38,6 +38,13 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 return;
             }
             try {
+                if (queue.Count == 0)
+                    return;
+
+                var unitCancellation = queue.Cast<AnalysisUnit>().First().State.Limits.InterruptAnalysisAtPassBoundary
+                    ? CancellationToken.None
+                    : cancel;
+
                 // Including a marker at the end of the queue allows us to see in
                 // the log how frequently the queue empties.
                 var endOfQueueMarker = new AnalysisUnit(null, null);
@@ -48,7 +55,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     queue.Append(endOfQueueMarker);
                 }
 
-                while (queue.Count > 0 && !cancel.IsCancellationRequested) {
+                while (queue.Count > 0 && !unitCancellation.IsCancellationRequested) {
                     _unit = queue.PopLeft();
 
                     if (_unit == endOfQueueMarker) {
@@ -61,6 +68,11 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         if (queueCountAtStart > 0) {
                             queue.Append(endOfQueueMarker);
                         }
+
+                        if (cancel.IsCancellationRequested) {
+                            break;
+                        }
+
                         continue;
                     }
 
@@ -75,7 +87,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     _unit.IsInQueue = false;
                     SetCurrentUnit(_unit);
                     AnalyzedEntries.Add(_unit.ProjectEntry);
-                    _unit.Analyze(this, cancel);
+                    _unit.Analyze(this, unitCancellation);
                 }
 
                 if (reportQueueSize != null) {

@@ -203,5 +203,10 @@ namespace Microsoft.PythonTools.Analysis {
         /// found.
         /// </summary>
         public bool UseTypeStubPackagesExclusively { get; set; }
+
+        /// <summary>
+        /// When analysis is requested to be cancelled, complete current pass.
+        /// </summary>
+        public bool InterruptAnalysisAtPassBoundary { get; set; }
     }
 }
