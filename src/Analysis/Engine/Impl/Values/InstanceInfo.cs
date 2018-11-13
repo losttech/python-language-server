@@ -438,7 +438,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
             } else if (strength >= MergeStrength.ToBaseClass) {
                 var ii = ns as InstanceInfo;
                 if (ii != null) {
-                    return ii.ClassInfo.UnionEquals(ClassInfo, strength);
+                    return ReferenceEquals(ii.ClassInfo, ClassInfo) || ii.ClassInfo.UnionEquals(ClassInfo, strength);
                 }
                 var bii = ns as BuiltinInstanceInfo;
                 if (bii != null) {
