@@ -76,7 +76,7 @@ namespace Microsoft.PythonTools.Analysis {
         /// </summary>
         internal readonly bool ForEval;
 
-        public bool IsAlive => _scope?.AnalysisValue?.IsAlive ?? true;
+        public virtual bool IsAlive => _scope?.AnalysisValue?.IsAlive ?? true;
 
         internal virtual ModuleInfo GetDeclaringModule() {
             if (_scope != null) {
@@ -398,8 +398,11 @@ namespace Microsoft.PythonTools.Analysis {
                     var baseClassArg = Ast.Bases[i];
 
                     if (baseClassArg.Name == null) {
-                        bases.Add(EvaluateBaseClass(ddg, classInfo, i, baseClassArg.Expression));
-
+                        //if (Ast.Name == "Derived")
+                        //    Debugger.Break();
+                        IAnalysisSet baseClass = EvaluateBaseClass(ddg, classInfo, i, baseClassArg.Expression);
+                        
+                        bases.Add(baseClass);
                     } else if (baseClassArg.Name == "metaclass") {
                         var metaClass = baseClassArg.Expression;
                         metaClass.Walk(ddg);
