@@ -96,20 +96,21 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 _analysisUnit.AddNamedParameterReferences(unit, keywordArgNames);
             }
 
-            var res = DoCall(node, unit, _analysisUnit, callArgs);
+            var res = DoCall(node, unit, _analysisUnit, callArgs, out var updatedParameters, out var updatedReturnType);
             if (_derived != null && Name != "__init__" && Name != "__new__" ) {
                 foreach (FunctionInfo derived in _derived) {
-                    var derivedResult = derived.DoCall(node, unit, derived._analysisUnit, callArgs);
+                    var derivedResult = derived.DoCall(node, unit, derived._analysisUnit, callArgs, out _, out _);
                     res = res.Union(derivedResult);
                 }
             }
 
-            if (Name != "__init__" && Name != "__new__") {
-                var linked = this.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks());
-
-                foreach (FunctionInfo linkedFunction in linked) {
-                    linkedFunction.DoCall(node, unit, linkedFunction._analysisUnit, callArgs);
-                }
+            if ((updatedParameters || updatedReturnType) && Name != "__init__" && Name != "__new__") {
+                this.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks(),
+                    enter: linkedFunction => {
+                        linkedFunction.DoCall(node, unit, linkedFunction._analysisUnit, callArgs,
+                            out var updatedLinkedParameters, out var updatedLinkedReturnType);
+                        return updatedLinkedParameters || updatedLinkedReturnType;
+                    });
             }
 
             if (_callsWithClosure != null) {
@@ -136,7 +137,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 Debug.Assert(calledUnit != null || unit.ForEval);
 
                 res.Split(v => v.IsResolvable(), out _, out var nonLazy);
-                res = DoCall(node, unit, calledUnit, callArgs);
+                res = DoCall(node, unit, calledUnit, callArgs, out _, out _);
                 res = res.Union(nonLazy);
             }
 
@@ -155,12 +156,15 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return r;
         }
 
-        private IAnalysisSet DoCall(Node node, AnalysisUnit callingUnit, FunctionAnalysisUnit calledUnit, ArgumentSet callArgs) {
+        private IAnalysisSet DoCall(Node node, AnalysisUnit callingUnit, FunctionAnalysisUnit calledUnit, ArgumentSet callArgs, out bool updatedParameters, out bool updatedReturnType) {
+            updatedParameters = false;
+            updatedReturnType = true;
+
             if(calledUnit == null) {
                 return AnalysisSet.Empty;
             }
-            calledUnit.UpdateParameters(callArgs);
-            calledUnit.ReturnValue.AddDependency(callingUnit);
+            updatedParameters = calledUnit.UpdateParameters(callArgs);
+            updatedReturnType = calledUnit.ReturnValue.AddDependency(callingUnit);
             return calledUnit.ReturnValue.Types;
         }
 
@@ -188,11 +192,6 @@ namespace Microsoft.PythonTools.Analysis.Values {
             bool @new = _derived.Add(derived);
             // TODO: do we need to re-queue this function analysis if a new derived was added?
             if (@new && Name != "__init__" && Name != "__new__") {
-                // this block adds about 25% to execution time
-                // it can be optimized by limiting propagation:
-                // 1. stop traversing link graphs at nodes when propagation does not change anything
-                // 2. limit do not propagate from derived to even more derived, and from current to more base
-                // (should be subdued by 1)
                 PropagateParameterTypes();
                 PropagateReturnType();
 
@@ -203,21 +202,32 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         void PropagateParameterTypes() {
-            if (FunctionDefinition.ArgCount == 0) {
+            if (IsStatic || FunctionDefinition.ArgCount <= 1) {
                 return;
             }
 
-            var linked = this.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks()).ToList();
-
-            for (int i = 0; i < FunctionDefinition.ArgCount; i++) {
-                Parameter parameterDefinition = FunctionDefinition.Parameters[i];
-                var parameter = ((FunctionScope)_analysisUnit.Scope).GetParameter(parameterDefinition.Name);
+            var perParamNewTypes = FunctionDefinition.Parameters.Skip(1 /* self */).Select(p => {
+                string parameterName = p.Name;
+                var parameter = ((FunctionScope)_analysisUnit.Scope).GetParameter(parameterName);
                 var newTypes = parameter.Types;
-                foreach (FunctionInfo linkedFunction in linked) {
-                    var linkedParameter = ((FunctionScope)linkedFunction._analysisUnit.Scope).GetParameter(parameterDefinition.Name);
-                    linkedParameter?.AddTypes(_analysisUnit, newTypes);
-                }
-            }
+                return (parameterName, newTypes);
+            }).ToArray();
+
+            // this block adds about 25% to execution time
+            // it can be optimized by limiting propagation:
+            // 1. stop traversing link graphs at nodes when propagation does not change anything
+            // 2. limit do not propagate from derived to even more derived, and from current to more base
+            // (should be subdued by 1)
+            this.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks(),
+                enter: linkedFunction => {
+                    bool addedSomething = false;
+                    foreach ((string parameterName, IAnalysisSet newTypes) in perParamNewTypes) {
+                        var linkedParameter = ((FunctionScope)linkedFunction._analysisUnit.Scope).GetParameter(parameterName);
+                        addedSomething |= linkedParameter?.AddTypes(_analysisUnit, newTypes) != false;
+                    }
+
+                    return addedSomething;
+                });
         }
 
         void PropagateReturnType() {
