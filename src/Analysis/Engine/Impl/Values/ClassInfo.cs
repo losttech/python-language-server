@@ -531,6 +531,12 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 return null;
             }
 
+            if (ReferenceEquals(ns1, ns2)) {
+                return ns1.TypeId == BuiltinTypeId.Object || ns1.TypeId == BuiltinTypeId.Type
+                    ? null
+                    : ns1;
+            }
+
             (ns1.Mro as Mro)?.RecomputeIfNecessary();
             (ns2.Mro as Mro)?.RecomputeIfNecessary();
 
@@ -688,9 +694,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 var finalMro = new List<AnalysisValue>();
 
                 foreach (var baseClass in bases.SelectMany()) {
-                    var klass = baseClass as ClassInfo;
-                    var builtInClass = baseClass as BuiltinClassInfo;
-                    if (klass != null && klass.Push()) {
+                    if (baseClass is ClassInfo klass && klass.Push()) {
                         try {
                             if (!klass._mro.IsValid) {
                                 isValid = false;
@@ -701,7 +705,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                         } finally {
                             klass.Pop();
                         }
-                    } else if (builtInClass != null && builtInClass.Push()) {
+                    } else if (baseClass is BuiltinClassInfo builtInClass && builtInClass.Push()) {
                         try {
                             finalMro.Add(builtInClass);
                             mergeList.Add(builtInClass.Mro.SelectMany().ToList());
