@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.PythonTools.Analysis.Analyzer {
+    using System.Runtime.CompilerServices;
+
     /// <summary>
     /// contains information about dependencies.  Each DependencyInfo is 
     /// attached to a VariableRef in a dictionary keyed off of the ProjectEntry.
@@ -112,9 +114,9 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 prev = _types;
             }
             if (prev.Any(av => !av.IsAlive)) {
-                _types = AnalysisSet.Create(prev.Where(av => av.IsAlive), prev.Comparer).Add(ns, out wasChanged);
+                _types = AnalysisSet.Create(prev.Where(av => av.IsAlive), prev.Comparer).Add(ns, out wasChanged, canMutate: true);
             } else {
-                _types = prev.Add(ns, out wasChanged);
+                _types = prev.Add(ns, out wasChanged, canMutate: false);
             }
 #if FULL_VALIDATION
             _changeCount += wasChanged ? 1 : 0;
