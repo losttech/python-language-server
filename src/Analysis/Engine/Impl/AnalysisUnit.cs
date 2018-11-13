@@ -398,11 +398,8 @@ namespace Microsoft.PythonTools.Analysis {
                     var baseClassArg = Ast.Bases[i];
 
                     if (baseClassArg.Name == null) {
-                        //if (Ast.Name == "Derived")
-                        //    Debugger.Break();
-                        IAnalysisSet baseClass = EvaluateBaseClass(ddg, classInfo, i, baseClassArg.Expression);
-                        
-                        bases.Add(baseClass);
+                        bases.Add(EvaluateBaseClass(ddg, classInfo, i, baseClassArg.Expression));
+
                     } else if (baseClassArg.Name == "metaclass") {
                         var metaClass = baseClassArg.Expression;
                         metaClass.Walk(ddg);
