@@ -534,8 +534,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
             (ns1.Mro as Mro)?.RecomputeIfNecessary();
             (ns2.Mro as Mro)?.RecomputeIfNecessary();
 
-            var mro1 = ns1.Mro.SelectMany().ToArray();
-            var mro2 = ns2.Mro.SelectMany().ToArray();
+            var mro1 = ns1.Mro.SelectMany();
+            var mro2 = ns2.Mro.SelectMany();
 
             if (!IsFirstForMroUnion(ns1, ns2)) {
                 var tmp = mro1;
