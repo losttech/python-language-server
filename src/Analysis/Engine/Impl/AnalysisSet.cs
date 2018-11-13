@@ -545,7 +545,7 @@ namespace Microsoft.PythonTools.Analysis {
                 }
             }
 #endif
-            return (x == null) ? (y == null) : x.Equals(y);
+            return (x == null) ? (y == null) : ReferenceEquals(x, y) || x.Equals(y);
         }
 
         public int GetHashCode(AnalysisValue obj) {
