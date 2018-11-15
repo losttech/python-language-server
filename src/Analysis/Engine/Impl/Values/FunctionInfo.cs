@@ -104,9 +104,13 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 }
             }
 
-            if ((updatedParameters || updatedReturnType) && Name != "__init__" && Name != "__new__") {
-                this.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks(),
-                    enter: linkedFunction => {
+            if ((updatedParameters || updatedReturnType) && !FunctionDefinition.IsLambda && Name != "__init__" && Name != "__new__"
+                && AnalysisUnit.Scope.OuterScope is ClassScope classScope) {
+                classScope.Class.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks().OfType<ClassInfo>(),
+                    enter: linkedClass => {
+                        if (!linkedClass.Scope.TryGetVariable(Name, out var linkedFunctionVariable)) return true;
+                        var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
+                        if (linkedFunction == null) return true;
                         linkedFunction.DoCall(node, unit, linkedFunction._analysisUnit, callArgs,
                             out var updatedLinkedParameters, out var updatedLinkedReturnType);
                         return updatedLinkedParameters || updatedLinkedReturnType;
@@ -184,8 +188,9 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return agg;
         }
 
-        internal bool AddDerived(FunctionInfo derived) {
+        internal bool AddDerived(FunctionInfo derived, ClassInfo declaredIn) {
             if (derived == null) throw new ArgumentNullException(nameof(derived));
+            if (declaredIn == null) throw new ArgumentNullException(nameof(declaredIn));
 
             _derived = _derived ?? new HashSet<FunctionInfo>(ReferenceComparer.Instance);
 
@@ -195,13 +200,13 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 PropagateParameterTypes();
                 PropagateReturnType();
 
-                derived.PropagateParameterTypes();
-                derived.PropagateReturnType();
+                derived.PropagateParameterTypes(declaredIn);
+                derived.PropagateReturnType(declaredIn);
             }
             return @new;
         }
 
-        void PropagateParameterTypes() {
+        void PropagateParameterTypes(ClassInfo classInfo = null) {
             if (IsStatic || FunctionDefinition.ArgCount <= 1) {
                 return;
             }
@@ -218,8 +223,12 @@ namespace Microsoft.PythonTools.Analysis.Values {
             // 1. stop traversing link graphs at nodes when propagation does not change anything
             // 2. limit do not propagate from derived to even more derived, and from current to more base
             // (should be subdued by 1)
-            this.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks(),
-                enter: linkedFunction => {
+            classInfo = classInfo ?? ((ClassScope)AnalysisUnit.Scope.OuterScope).Class;
+            classInfo.TraverseTransitivelyLinked(c => c.GetParameterTypePropagationLinks().OfType<ClassInfo>(),
+                enter: linkedClass => {
+                    if (!linkedClass.Scope.TryGetVariable(Name, out var linkedFunctionVariable)) return true;
+                    var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
+                    if (linkedFunction == null) return true;
                     bool addedSomething = false;
                     foreach ((string parameterName, IAnalysisSet newTypes) in perParamNewTypes) {
                         var linkedParameter = ((FunctionScope)linkedFunction._analysisUnit.Scope).GetParameter(parameterName);
@@ -230,16 +239,19 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 });
         }
 
-        void PropagateReturnType() {
+        void PropagateReturnType(ClassInfo classInfo = null) {
             if (!_analysisUnit.ReturnValue.HasTypes || _analysisUnit.ReturnValue.Types.Count == 0) {
                 return;
             }
 
             IAnalysisSet newTypes = _analysisUnit.ReturnValue.Types;
-            var linked = this.TraverseTransitivelyLinked(f => f.GetReturnTypePropagationLinks());
+            classInfo = classInfo ?? ((ClassScope)AnalysisUnit.Scope.OuterScope).Class;
+            var linked = classInfo.TraverseTransitivelyLinked(c => c.GetReturnTypePropagationLinks().OfType<ClassInfo>());
 
-            foreach (FunctionInfo linkedFunction in linked) {
-                linkedFunction._analysisUnit.ReturnValue.AddTypes(_analysisUnit, newTypes);
+            foreach (ClassInfo linkedClass in linked) {
+                if (!linkedClass.Scope.TryGetVariable(Name, out var linkedFunctionVariable)) continue;
+                var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
+                linkedFunction?._analysisUnit.ReturnValue.AddTypes(_analysisUnit, newTypes);
             }
         }
 
@@ -829,30 +841,6 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public override int GetHashCode() => FunctionDefinition.GetHashCode();
-
-        internal IEnumerable<FunctionInfo> GetBaseFunctions() {
-            var classScope = _analysisUnit.Scope.OuterScope as ClassScope;
-            if (classScope == null) {
-                return Enumerable.Empty<FunctionInfo>();
-            }
-
-            return DDG.LookupBaseMethods(Name, classScope.Class.Mro, FunctionDefinition, _analysisUnit)
-                .OfType<FunctionInfo>();
-        }
-
-        internal IEnumerable<FunctionInfo> GetReturnTypePropagationLinks() {
-            var baseFunctions = GetBaseFunctions();
-            return ProjectState.Limits.PropagateReturnTypesToDerivedMethods
-                ? baseFunctions.Concat(Derived.MaybeEnumerate())
-                : baseFunctions;
-        }
-
-        internal IEnumerable<FunctionInfo> GetParameterTypePropagationLinks() {
-            var derivedFunctions = Derived.MaybeEnumerate();
-            return ProjectState.Limits.PropagateParameterTypeToBaseMethods
-                ? derivedFunctions.Concat(GetBaseFunctions())
-                : derivedFunctions;
-        }
 
         internal override bool UnionEquals(AnalysisValue av, int strength) {
             if (strength >= MergeStrength.ToObject) {

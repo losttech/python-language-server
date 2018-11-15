@@ -518,8 +518,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         }
                     }
 
-                    foreach (var @base in bases.OfType<FunctionInfo>()) {
-                        @base.AddDerived(function);
+                    foreach (var @base in curClass.Class.Mro.Skip(1).OfType<ClassInfo>()) {
+                        if (!@base.Scope.TryGetVariable(function.Name, out var linkedFunctionVariable)) continue;
+                        var baseMethod = linkedFunctionVariable.Types as FunctionInfo;
+                        baseMethod?.AddDerived(function, @base);
                     }
                 }
             }
@@ -612,12 +614,15 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
             var function = fnScope.Function;
 
-            if (function.Name != "__init__" && function.Name != "__new__") {
-                var linked = function.TraverseTransitivelyLinked(f => f.GetReturnTypePropagationLinks());
+            var classInfo = (fnScope.OuterScope as ClassScope)?.Class;
+            if (classInfo != null && function.Name != "__init__" && function.Name != "__new__") {
+                var linked = classInfo.TraverseTransitivelyLinked(c => c.GetReturnTypePropagationLinks().OfType<ClassInfo>());
 
-                foreach (FunctionInfo linkedFunction in linked) {
-                    var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction.AnalysisUnit;
-                    linkedAnalysisUnit.ReturnValue.AddTypes(_unit, lookupRes);
+                foreach (var linkedClass in linked) {
+                    if (!linkedClass.Scope.TryGetVariable(function.Name, out var linkedFunctionVariable)) continue;
+                    var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
+                    var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction?.AnalysisUnit;
+                    linkedAnalysisUnit?.ReturnValue.AddTypes(_unit, lookupRes);
                 }
             }
             return true;
