@@ -259,11 +259,14 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         resType
                     );
 
-                    if (Function.Name != "__init__" && Function.Name != "__new__") {
-                        var linked = Function.TraverseTransitivelyLinked(f => f.GetReturnTypePropagationLinks());
-                        foreach (FunctionInfo linkedFunction in linked) {
-                            var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction.AnalysisUnit;
-                            linkedAnalysisUnit.FunctionScope.AddReturnTypes(Ast.ReturnAnnotation, ddg._unit, resType);
+                    var classInfo = (Function.AnalysisUnit.Scope.OuterScope as ClassScope)?.Class;
+                    if (classInfo != null && Function.Name != "__init__" && Function.Name != "__new__") {
+                        var linked = classInfo.TraverseTransitivelyLinked(c => c.GetReturnTypePropagationLinks().OfType<ClassInfo>());
+                        foreach (ClassInfo linkedClass in linked) {
+                            if (!linkedClass.Scope.TryGetVariable(Function.Name, out var linkedFunctionVariable)) continue;
+                            var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
+                            var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction?.AnalysisUnit;
+                            linkedAnalysisUnit?.FunctionScope.AddReturnTypes(Ast.ReturnAnnotation, ddg._unit, resType);
                         }
                     }
                 }
@@ -285,21 +288,27 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
         private bool AddParameterTypes(string name, IAnalysisSet types) {
             var functionScope = FunctionScope;
-            if (!AddParameterTypes(functionScope, name, types)) {
-                return false;
+            bool added = AddParameterTypes(functionScope, name, types);
+            if (!added) {
+                return added;
             }
 
-            if (Function.Name == "__init__" || Function.Name == "__new__") {
-                return true;
+            if (Function.FunctionDefinition.IsLambda || Function.Name == "__init__" || Function.Name == "__new__") {
+                return added;
             }
 
-            var linked = Function.TraverseTransitivelyLinked(f => f.GetParameterTypePropagationLinks());
+            if (!(Scope.OuterScope is ClassScope classScope)) {
+                return added;
+            }
+            var linked = classScope.Class.TraverseTransitivelyLinked(c => c.GetParameterTypePropagationLinks().OfType<ClassInfo>())
+                .Select(c => c.Scope.TryGetVariable(Function.Name, out var linkedFunctionVariable) ? linkedFunctionVariable.Types : null)
+                .OfType<FunctionInfo>();
             foreach (FunctionInfo linkedFunction in linked) {
                 var linkedFunctionAnalysisUnit = (FunctionAnalysisUnit)linkedFunction.AnalysisUnit;
-                AddParameterTypes(linkedFunctionAnalysisUnit.FunctionScope, name, types);
+                AddParameterTypes(linkedFunctionAnalysisUnit?.FunctionScope, name, types);
             }
 
-            return true;
+            return added;
         }
 
         private AnalysisValue[] GetBaseMethods() {

@@ -610,6 +610,20 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return base.UnionHashCode(strength);
         }
 
+        internal IEnumerable<IAnalysisSet> GetReturnTypePropagationLinks() {
+            var baseClasses = Mro.Skip(1);
+            return _projectState.Limits.PropagateReturnTypesToDerivedMethods
+                ? baseClasses.Concat(SubClasses.Types)
+                : baseClasses;
+        }
+
+        internal IEnumerable<IAnalysisSet> GetParameterTypePropagationLinks() {
+            var derivedClasses = SubClasses.Types;
+            return _projectState.Limits.PropagateParameterTypeToBaseMethods
+                ? derivedClasses.Concat(Mro.Skip(1))
+                : derivedClasses;
+        }
+
         #region IVariableDefContainer Members
 
         public IEnumerable<IReferenceable> GetDefinitions(string name) {
