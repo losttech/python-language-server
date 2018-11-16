@@ -206,7 +206,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return @new;
         }
 
-        void PropagateParameterTypes(ClassInfo classInfo = null) {
+        internal void PropagateParameterTypes(ClassInfo classInfo = null) {
             if (IsStatic || FunctionDefinition.ArgCount <= 1) {
                 return;
             }
@@ -239,7 +239,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 });
         }
 
-        void PropagateReturnType(ClassInfo classInfo = null) {
+        internal void PropagateReturnType(ClassInfo classInfo = null) {
             if (!_analysisUnit.ReturnValue.HasTypes || _analysisUnit.ReturnValue.Types.Count == 0) {
                 return;
             }

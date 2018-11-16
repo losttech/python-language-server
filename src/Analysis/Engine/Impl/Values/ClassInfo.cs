@@ -624,6 +624,22 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 : derivedClasses;
         }
 
+        internal void PropagateFunctionTypes() {
+            foreach (var function in GetMemberFunctions()) {
+                if (function.Name == "__init__" || function.Name == "__new__")
+                    continue;
+
+                function.PropagateParameterTypes(this);
+                function.PropagateReturnType(this);
+            }
+        }
+
+        private IEnumerable<FunctionInfo> GetMemberFunctions() =>
+            AnalysisUnit.Scope.AllVariables.SelectMany(kv => kv.Value.Types)
+                .OfType<FunctionInfo>()
+                .Where(f => !f.IsClassMethod && !f.IsStatic
+                         && f.AnalysisUnit.Scope.OuterScope == Scope);
+
         #region IVariableDefContainer Members
 
         public IEnumerable<IReferenceable> GetDefinitions(string name) {

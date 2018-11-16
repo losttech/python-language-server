@@ -468,13 +468,19 @@ namespace Microsoft.PythonTools.Analysis {
             baseClass.Walk(ddg);
             var bases = ddg._eval.Evaluate(baseClass);
 
-            foreach (var baseValue in bases) {
-                var ci = baseValue as ClassInfo;
-                if (ci != null) {
-                    if (!ci._mro.IsValid) {
-                        ci._mro.Recompute();
-                    }
-                    ci.SubClasses.AddTypes(newClass.AnalysisUnit, newClass);
+            var userBases = bases.OfType<ClassInfo>().ToList();
+
+            foreach (var ci in userBases) {
+                if (!ci._mro.IsValid) {
+                    ci._mro.Recompute();
+                }
+                ci.SubClasses.AddTypes(newClass.AnalysisUnit, newClass);
+            }
+
+            if (userBases.Count > 0) {
+                newClass.PropagateFunctionTypes();
+                foreach (ClassInfo @base in userBases) {
+                    @base.PropagateFunctionTypes();
                 }
             }
 
