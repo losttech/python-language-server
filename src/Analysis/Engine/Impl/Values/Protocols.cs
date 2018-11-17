@@ -393,12 +393,19 @@ namespace Microsoft.PythonTools.Analysis.Values {
             Name = GetNameFromValues();
         }
 
+        const int Cutoff = 1024;
         private string GetNameFromValues() {
             // Enumerate manually since SelectMany drops empty/unknown values
             var sb = new StringBuilder("tuple[");
+
             for (var i = 0; i < _values.Length; i++) {
-               sb.AppendIf(i > 0, ", ");
-               AppendParameterString(sb, _values[i].ToArray());
+                if (sb.Length > Cutoff) {
+                    sb.AppendIf(i > 0, ", ");
+                    sb.Append("...");
+                    break;
+                }
+                sb.AppendIf(i > 0, ", ");
+                AppendParameterString(sb, _values[i].ToArray());
             }
             sb.Append(']');
             return sb.ToString();
@@ -412,6 +419,11 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
             sb.AppendIf(sets.Length > 1, "[");
             for (var i = 0; i < sets.Length; i++) {
+                if (sb.Length > Cutoff) {
+                    sb.AppendIf(i > 0, ", ");
+                    sb.Append("...");
+                    break;
+                }
                 sb.AppendIf(i > 0, ", ");
                 sb.Append(sets[i] is IHasQualifiedName qn ? qn.FullyQualifiedName : sets[i].ShortDescription);
             }
