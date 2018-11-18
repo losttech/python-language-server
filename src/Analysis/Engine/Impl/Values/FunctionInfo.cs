@@ -255,8 +255,6 @@ namespace Microsoft.PythonTools.Analysis.Values {
             }
         }
 
-        internal IEnumerable<FunctionInfo> Derived => _derived;
-
         internal void AddParameterReference(Node node, AnalysisUnit unit, string name) {
             var vd = (_analysisUnit.Scope as FunctionScope)?.GetParameter(name);
             vd?.AddReference(node, unit);

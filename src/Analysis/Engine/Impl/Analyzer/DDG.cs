@@ -429,7 +429,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     foreach (var @base in curClass.Class.Mro.Skip(1).OfType<ClassInfo>()) {
                         if (!@base.Scope.TryGetVariable(function.Name, out var linkedFunctionVariable)) continue;
                         var baseMethod = linkedFunctionVariable.Types as FunctionInfo;
-                        baseMethod?.AddDerived(function, @base);
+                        baseMethod?.AddDerived(function, curClass.Class);
                     }
                 }
             }
@@ -599,7 +599,8 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     if (!linkedClass.Scope.TryGetVariable(function.Name, out var linkedFunctionVariable)) continue;
                     var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
                     var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction?.AnalysisUnit;
-                    linkedAnalysisUnit?.ReturnValue.AddTypes(_unit, lookupRes);
+                    var linkedScope = linkedAnalysisUnit?.Scope as FunctionScope;
+                    linkedScope?.AddReturnTypes(node, _unit, lookupRes);
                 }
             }
             return true;
