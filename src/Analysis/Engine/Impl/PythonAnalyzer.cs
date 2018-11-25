@@ -358,6 +358,8 @@ namespace Microsoft.PythonTools.Analysis {
             return ModuleDictToMemberResult(d);
         }
 
+        public IModule TryGetModule(string name) => Modules.TryImport(name, out var reference) ? reference.Module : null;
+
         private static IMemberResult[] ModuleDictToMemberResult(Dictionary<string, List<ModuleLoadState>> d) {
             var result = new IMemberResult[d.Count];
             var pos = 0;
