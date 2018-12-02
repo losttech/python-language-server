@@ -137,6 +137,11 @@ namespace Microsoft.PythonTools.Analysis.Values {
             Returns.AddTypes(unit, returnValue, enqueue, DeclaringModule);
         }
 
+        public void SetReturnAndLock(Node node, AnalysisUnit unit, IAnalysisSet returnValue, bool enqueue = true) {
+            Returns.SetTypes(returnValue, enqueue, DeclaringModule);
+            Returns.Lock();
+        }
+
         public void AddSend(Node node, AnalysisUnit unit, IAnalysisSet sendValue, bool enqueue = true) {
             if (FunctionScope.IsOriginalClosureScope(unit.InterpreterScope)) {
                 // Do not add sent types to original scope of closure functions

@@ -14,6 +14,7 @@
 // See the Apache Version 2.0 License for specific language governing
 // permissions and limitations under the License.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -174,7 +175,7 @@ namespace Microsoft.PythonTools.Analysis {
             } else if (uc.Strength < UnionComparer.MAX_STRENGTH) {
                 MakeUnion(uc.Strength + 1);
             } else if (!LockedVariableDefs.TryGetValue(this, out dummy)) {
-                LockedVariableDefs.Add(this, LockedVariableDefsValue);
+                Lock();
                 // The remainder of this block logs diagnostic information to
                 // allow the VariableDef to be identified.
                 int total = 0;
@@ -211,6 +212,16 @@ namespace Microsoft.PythonTools.Analysis {
             return roughSet.Count;
         }
 
+        public bool IsLocked => LockedVariableDefs.TryGetValue(this, out _);
+        internal void Lock() {
+            while (!IsLocked) {
+                try {
+                    LockedVariableDefs.Add(this, LockedVariableDefsValue);
+                    return;
+                } catch (ArgumentException) { }
+            }
+        }
+
         public bool AddTypes(AnalysisUnit unit, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
             return AddTypes(unit.DependencyProject, newTypes, enqueue, declaringScope);
         }
@@ -224,13 +235,13 @@ namespace Microsoft.PythonTools.Analysis {
 #elif DEBUG
         private static bool ENABLE_SET_CHECK = false;
 #endif
+        
 
         public bool AddTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
             if (newTypes.Count == 0)
                 return false;
 
-            object dummy;
-            if (LockedVariableDefs.TryGetValue(this, out dummy)) {
+            if (IsLocked) {
                 return false;
             }
             
@@ -275,6 +286,65 @@ namespace Microsoft.PythonTools.Analysis {
             }
 
             return added;
+        }
+
+        public bool SetTypes(IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
+            bool changed = false;
+            foreach (IVersioned projectEntry in _dependencies.Keys) {
+                changed |= SetTypes(projectEntry, newTypes, enqueue, declaringScope);
+            }
+            return changed;
+        }
+
+        public bool SetTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
+            object dummy;
+            if (LockedVariableDefs.TryGetValue(this, out dummy)) {
+                return false;
+            }
+
+            bool changed = false;
+            var dependencies = GetDependentItems(projectEntry);
+            changed |= dependencies.Types.Count > 0;
+            dependencies.ClearTypes();
+
+            if (newTypes.Count > 0) {
+                foreach (var value in newTypes) {
+
+#if DEBUG || FULL_VALIDATION
+                    if (ENABLE_SET_CHECK) {
+                        bool testAdded;
+                        var original = dependencies.ToImmutableTypeSet();
+                        var afterAdded = original.Add(value, out testAdded, false);
+                        if (afterAdded.Comparer == original.Comparer) {
+                            if (testAdded) {
+                                if (!ObjectComparer.Instance.Equals(afterAdded, original)) {
+                                    // Double validation, as sometimes testAdded is a false positive
+                                    afterAdded = original.Add(value, out testAdded, false);
+                                    if (testAdded) {
+                                        Validation.Assert(!ObjectComparer.Instance.Equals(afterAdded, original), $"Inconsistency adding {value} to {original}");
+                                    }
+                                }
+                            } else if (afterAdded.Count == original.Count) {
+                                Validation.Assert(ObjectComparer.Instance.Equals(afterAdded, original), $"Inconsistency not adding {value} to {original}");
+                            }
+                        }
+                    }
+#endif
+
+                    if (dependencies.AddType(value)) {
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                _cache = null;
+            }
+            if (changed && enqueue) {
+                EnqueueDependents(projectEntry, declaringScope);
+            }
+
+            return changed;
         }
 
         public IAnalysisSet GetTypes(AnalysisUnit accessor, ProjectEntry declaringScope = null) {

@@ -67,5 +67,10 @@ namespace Microsoft.PythonTools.Analysis.Values {
             Returns.MakeUnionStrongerIfMoreThan(ProjectState.Limits.ReturnTypes, returnValue);
             Returns.AddTypes(unit, returnValue, enqueue, DeclaringModule);
         }
+
+        public void SetReturnAndLock(Node node, AnalysisUnit unit, IAnalysisSet returnValue, bool enqueue = true) {
+            Returns.SetTypes(returnValue, enqueue, DeclaringModule);
+            Returns.Lock();
+        }
     }
 }

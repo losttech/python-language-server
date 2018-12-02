@@ -127,6 +127,23 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             return wasChanged;
         }
 
+        public void ClearTypes() {
+            IAnalysisSet prev;
+            if (TAKE_COPIES) {
+                prev = _types.Clone();
+            } else {
+                prev = _types;
+            }
+            _types = AnalysisSet.Empty;
+#if FULL_VALIDATION
+            bool wasChanged = prev.Count > 0;
+            _changeCount += wasChanged ? 1 : 0;
+            // The value doesn't mean anything, we just want to know if a variable is being
+            // updated too often.
+            Validation.Assert(_changeCount < 10000, $"Excessive changes to a variable");
+#endif
+        }
+
         internal bool MakeUnion(int strength) {
             bool wasChanged;
             _types = _types.AsUnion(strength, out wasChanged);
