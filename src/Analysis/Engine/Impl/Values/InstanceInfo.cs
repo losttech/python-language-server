@@ -414,7 +414,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public override PythonMemberType MemberType => PythonMemberType.Instance;
 
         public override bool IsOfType(IAnalysisSet klass) {
-            return klass.Contains(ClassInfo) || klass.Contains(ProjectState.ClassInfos[BuiltinTypeId.Object]);
+            var mro = AnalysisSet.UnionAll(Mro);
+            return klass.ContainsAny(mro);
         }
 
         public override string ToString() {
