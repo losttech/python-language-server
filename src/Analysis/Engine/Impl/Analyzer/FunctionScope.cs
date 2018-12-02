@@ -78,6 +78,17 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             }
         }
 
+        internal void SetReturnTypesAndLock(Node node, AnalysisUnit unit, IAnalysisSet types, bool enqueue = true) {
+            if (Coroutine != null) {
+                Coroutine.SetReturnAndLock(node, unit, types, enqueue);
+            } else if (Generator != null) {
+                Generator.SetReturnAndLock(node, unit, types, enqueue);
+            } else {
+                ReturnValue.SetTypes(types, enqueue);
+                ReturnValue.Lock();
+            }
+        }
+
         public VariableDef GetParameter(string name) {
             if (string.IsNullOrEmpty(name)) {
                 return null;

@@ -215,7 +215,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 string parameterName = p.Name;
                 var parameter = ((FunctionScope)_analysisUnit.Scope).GetParameter(parameterName);
                 var newTypes = parameter.Types;
-                return (parameterName, newTypes);
+                return (parameterName, newTypes,
+                    @lock: parameter.IsLocked && ProjectState.Limits.PropagateParameterTypeToBaseMethods);
             }).ToArray();
 
             // this block adds about 25% to execution time
@@ -230,9 +231,13 @@ namespace Microsoft.PythonTools.Analysis.Values {
                     var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
                     if (linkedFunction == null) return true;
                     bool addedSomething = false;
-                    foreach ((string parameterName, IAnalysisSet newTypes) in perParamNewTypes) {
+                    foreach ((string parameterName, IAnalysisSet newTypes, bool @lock) in perParamNewTypes) {
                         var linkedParameter = ((FunctionScope)linkedFunction._analysisUnit.Scope).GetParameter(parameterName);
-                        addedSomething |= linkedParameter?.AddTypes(_analysisUnit, newTypes) != false;
+                        addedSomething |= @lock
+                            ? linkedParameter?.SetTypes(newTypes) != false
+                            : linkedParameter?.AddTypes(_analysisUnit, newTypes) != false;
+                        if (@lock)
+                            linkedParameter?.Lock();
                     }
 
                     return addedSomething;
@@ -240,8 +245,11 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         internal void PropagateReturnType(ClassInfo classInfo = null) {
-            if (!_analysisUnit.ReturnValue.HasTypes || _analysisUnit.ReturnValue.Types.Count == 0) {
-                return;
+            bool @lock = _analysisUnit.ReturnValue.IsLocked && ProjectState.Limits.PropagateReturnTypesToDerivedMethods;
+            if (!@lock) {
+                if (!_analysisUnit.ReturnValue.HasTypes || _analysisUnit.ReturnValue.Types.Count == 0) {
+                    return;
+                }
             }
 
             IAnalysisSet newTypes = _analysisUnit.ReturnValue.Types;
@@ -251,7 +259,13 @@ namespace Microsoft.PythonTools.Analysis.Values {
             foreach (ClassInfo linkedClass in linked) {
                 if (!linkedClass.Scope.TryGetVariable(Name, out var linkedFunctionVariable)) continue;
                 var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
-                linkedFunction?._analysisUnit.ReturnValue.AddTypes(_analysisUnit, newTypes);
+                VariableDef returnValue = linkedFunction?._analysisUnit.ReturnValue;
+                if (@lock) {
+                    returnValue?.SetTypes(newTypes);
+                    returnValue?.Lock();
+                } else {
+                    returnValue?.AddTypes(_analysisUnit, newTypes);
+                }
             }
         }
 
