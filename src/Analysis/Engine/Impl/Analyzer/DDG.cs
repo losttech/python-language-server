@@ -521,7 +521,9 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     foreach (var @base in curClass.Class.Mro.Skip(1).OfType<ClassInfo>()) {
                         if (!@base.Scope.TryGetVariable(function.Name, out var linkedFunctionVariable)) continue;
                         var baseMethod = linkedFunctionVariable.Types as FunctionInfo;
-                        baseMethod?.AddDerived(function, curClass.Class);
+                        // TODO: instead of ignoring wrappers, get the underlying function
+                        if (baseMethod?.Name == function.Name)
+                            baseMethod?.AddDerived(function, curClass.Class);
                     }
                 }
             }
