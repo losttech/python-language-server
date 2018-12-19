@@ -234,7 +234,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                     foreach ((string parameterName, IAnalysisSet newTypes, bool @lock) in perParamNewTypes) {
                         var linkedParameter = ((FunctionScope)linkedFunction._analysisUnit.Scope).GetParameter(parameterName);
                         addedSomething |= @lock
-                            ? linkedParameter?.SetTypes(newTypes) != false
+                            ? linkedParameter?.SetTypes(_analysisUnit.ProjectEntry, newTypes) != false
                             : linkedParameter?.AddTypes(_analysisUnit, newTypes) != false;
                         if (@lock)
                             linkedParameter?.Lock();
@@ -261,7 +261,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
                 VariableDef returnValue = linkedFunction?._analysisUnit.ReturnValue;
                 if (@lock) {
-                    returnValue?.SetTypes(newTypes);
+                    returnValue?.SetTypes(_analysisUnit.ProjectEntry, newTypes);
                     returnValue?.Lock();
                 } else {
                     returnValue?.AddTypes(_analysisUnit, newTypes);

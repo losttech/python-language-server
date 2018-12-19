@@ -251,11 +251,11 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         var gen = ((FunctionScope)Scope).Generator;
                         foreach (var g in gens.SelectMany(p => p.GetProtocols<GeneratorProtocol>())) {
                             if (overwriteWithAnnotations) {
-                                gen.Yields.SetTypes(g.Yielded);
+                                gen.Yields.SetTypes(ProjectEntry, g.Yielded);
                                 gen.Yields.Lock();
-                                gen.Sends.SetTypes(g.Sent);
+                                gen.Sends.SetTypes(ProjectEntry, g.Sent);
                                 gen.Sends.Lock();
-                                gen.Returns.SetTypes(g.Returned);
+                                gen.Returns.SetTypes(ProjectEntry, g.Returned);
                                 gen.Returns.Lock();
                             } else {
                                 gen.Yields.AddTypes(ProjectEntry, g.Yielded);
@@ -265,7 +265,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         }
                     }
                 } else {
-                    if (overwriteWithAnnotations) {
+                    if (overwriteWithAnnotations && ann.Count > 0) {
                         ((FunctionScope)Scope).SetReturnTypesAndLock(
                             Ast.ReturnAnnotation,
                             ddg._unit,
@@ -286,7 +286,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                             if (!linkedClass.Scope.TryGetVariable(Function.Name, out var linkedFunctionVariable)) continue;
                             var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
                             var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction?.AnalysisUnit;
-                            linkedAnalysisUnit?.FunctionScope.SetReturnTypesAndLock(Ast.ReturnAnnotation, ddg._unit, resType);
+                            if (FunctionScope.ReturnValue.IsLocked)
+                                linkedAnalysisUnit?.FunctionScope.SetReturnTypesAndLock(Ast.ReturnAnnotation, ddg._unit, resType);
+                            else
+                                linkedAnalysisUnit?.FunctionScope.AddReturnTypes(Ast.ReturnAnnotation, ddg._unit, resType);
                         }
                     }
                 }
@@ -299,14 +302,14 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             if (!functionScope.TryGetVariable(name, out var param))
                 return false;
             if (overwrite) {
-                param.SetTypes(types, false);
+                param.SetTypes(ProjectEntry, types, false);
                 param.Lock();
             } else
                 param.AddTypes(this, types, false);
             var vd = functionScope.GetParameter(name);
             if (vd != null && vd != param) {
                 if (overwrite) {
-                    vd.SetTypes(types, false);
+                    vd.SetTypes(ProjectEntry, types, false);
                     vd.Lock();
                 }  else
                     vd.AddTypes(this, types, false);
@@ -316,6 +319,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
         private bool AddParameterTypes(string name, IAnalysisSet types, bool overwrite) {
             var functionScope = FunctionScope;
+            overwrite &= types.Count > 0;
             bool added = AddParameterTypes(functionScope, name, types, overwrite);
             if (!added) {
                 return added;

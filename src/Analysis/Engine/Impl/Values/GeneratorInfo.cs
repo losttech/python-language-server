@@ -138,7 +138,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public void SetReturnAndLock(Node node, AnalysisUnit unit, IAnalysisSet returnValue, bool enqueue = true) {
-            Returns.SetTypes(returnValue, enqueue, DeclaringModule);
+            Returns.SetTypes(unit.ProjectEntry, returnValue, enqueue, DeclaringModule);
             Returns.Lock();
         }
 
