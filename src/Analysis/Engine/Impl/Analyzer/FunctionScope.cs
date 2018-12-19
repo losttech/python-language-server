@@ -84,7 +84,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             } else if (Generator != null) {
                 Generator.SetReturnAndLock(node, unit, types, enqueue);
             } else {
-                ReturnValue.SetTypes(types, enqueue);
+                ReturnValue.SetTypes(unit.DependencyProject, types, enqueue);
                 ReturnValue.Lock();
             }
         }

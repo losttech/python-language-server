@@ -288,17 +288,16 @@ namespace Microsoft.PythonTools.Analysis {
             return added;
         }
 
-        public bool SetTypes(IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
-            bool changed = false;
-            foreach (IVersioned projectEntry in _dependencies.Keys) {
-                changed |= SetTypes(projectEntry, newTypes, enqueue, declaringScope);
+        public bool SetTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
+            bool changed = SetTypesForSingleEntry(projectEntry, newTypes, enqueue, declaringScope);
+            foreach (IVersioned otherEntry in _dependencies.Keys) {
+                changed |= SetTypesForSingleEntry(otherEntry, newTypes, enqueue, declaringScope);
             }
             return changed;
         }
 
-        public bool SetTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
-            object dummy;
-            if (LockedVariableDefs.TryGetValue(this, out dummy)) {
+        private bool SetTypesForSingleEntry(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
+            if (IsLocked) {
                 return false;
             }
 
