@@ -57,7 +57,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                         returnInternalTypes: true
                     );
                     foreach (var type in ce.Args.MaybeEnumerate().Where(e => e?.Expression != null).Select(e => new TypeAnnotation(unit.State.LanguageVersion, e.Expression))) {
-                        newArgs.Add(type.GetValue(eval) ?? AnalysisSet.Empty);
+                        newArgs.Add(type.GetValue(eval)?.GetInstanceType() ?? AnalysisSet.Empty);
                     }
                     return new TypingTypeInfo(_baseName, _innerValue, newArgs);
                 });
@@ -83,7 +83,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
                         returnInternalTypes: true
                     );
                     foreach (var type in exprs.Select(e => new TypeAnnotation(unit.State.LanguageVersion, e))) {
-                        newArgs.Add(type.GetValue(eval) ?? AnalysisSet.Empty);
+                        newArgs.Add(type.GetValue(eval)?.GetInstanceType() ?? AnalysisSet.Empty);
                     }
                     return new TypingTypeInfo(_baseName, _innerValue, newArgs);
                 });

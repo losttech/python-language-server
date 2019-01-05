@@ -62,7 +62,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         }
                         var n = c.GetConstantValueAsString();
                         if (!string.IsNullOrEmpty(n)) {
-                            return _eval.LookupAnalysisSetByName(_node, n, addDependency: true).GetInstanceType();
+                            return _eval.LookupAnalysisSetByName(_node, n, addDependency: true);
                         }
                         return c;
                     })
