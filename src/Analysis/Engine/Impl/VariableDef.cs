@@ -297,12 +297,10 @@ namespace Microsoft.PythonTools.Analysis {
         }
 
         private bool SetTypesForSingleEntry(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
-            if (IsLocked) {
-                return false;
-            }
-
             bool changed = false;
             var dependencies = GetDependentItems(projectEntry);
+            if (ReferenceEquals(dependencies.Types, newTypes) || dependencies.Types.SetEquals(newTypes, ReferenceComparer.Instance))
+                return false;
             changed |= dependencies.Types.Count > 0;
             dependencies.ClearTypes();
 
