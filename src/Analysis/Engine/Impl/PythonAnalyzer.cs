@@ -963,7 +963,11 @@ namespace Microsoft.PythonTools.Analysis {
         /// Specifies a callback to invoke to provide feedback on the number of
         /// items being processed.
         /// </summary>
+        /// <param name="interval">How often (in terms of processed AnalysisUnits) to report the queue size.
+        /// The value of <c>0</c> causes a report to happen at each pass end instead.</param>
         public void SetQueueReporting(Action<int> reportFunction, int interval = 1) {
+            if (interval < 0)
+                throw new ArgumentOutOfRangeException(nameof(interval));
             _reportQueueSize = reportFunction;
             _reportQueueInterval = interval;
         }
