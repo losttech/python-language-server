@@ -40,7 +40,7 @@ namespace Microsoft.PythonTools.Analysis {
         protected AnalysisValue() { }
 
 
-        public bool IsAlive => DeclaringModule == null || DeclaringVersion == DeclaringModule.AnalysisVersion;
+        public virtual bool IsAlive => DeclaringModule == null || DeclaringVersion == DeclaringModule.AnalysisVersion;
 
         /// <summary>
         /// Returns an immutable set which contains just this AnalysisValue.

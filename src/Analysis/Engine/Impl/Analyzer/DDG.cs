@@ -136,15 +136,19 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             }
 
             string annotationModuleName = _unit.DeclaringModule.Name + PythonAnalyzer.AnnotationsModuleSuffix;
-            if (ProjectState.Modules.TryGetImportedModule(annotationModuleName, out var _)
-                && TryImportModule(annotationModuleName, true, out var annotationsReference, out var _)) {
-                annotationsReference.Module.Imported(_unit);
-
-                if (ProjectState.Modules.TryGetImportedModule(annotationModuleName, out annotationsReference)) {
-                    FinishImportModuleOrMember(annotationsReference, attribute: null, name: "__pyi__",
-                        addRef: true, node: node, nameReference: new NameExpression("__pyi__"));
-                } else
-                    Debug.Fail($"Failed to get module {annotationModuleName} we just imported");
+            if (ProjectState.Modules.TryGetImportedModule(annotationModuleName, out var _)) {
+                var asNameExpression = new NameExpression("__pyi__");
+                var moduleImportExpression = new DottedName(annotationModuleName.Split('.').Select(part => new NameExpression(part)).ToArray());
+                var imports = _pathResolver.GetImportsFromAbsoluteName(_filePath, annotationModuleName.Split('.'), forceAbsolute: true);
+                switch (imports) {
+                    case ModuleImport moduleImports when TryGetModule(moduleImportExpression, moduleImports, out var module):
+                    case PossibleModuleImport possibleModuleImport when TryGetModule(moduleImportExpression, possibleModuleImport, out module):
+                        ImportModule(node, module, moduleImportExpression, asNameExpression);
+                        break;
+                    case ImportNotFound notFound:
+                        MakeUnresolvedImport(notFound.FullName, moduleImportExpression);
+                        break;
+                }
             }
 
             return base.Walk(node);
@@ -499,11 +503,11 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             ProjectState.AddDiagnostic(spanNode, _unit, Resources.ErrorRelativeImportNoPackage, DiagnosticSeverity.Warning, ErrorMessages.UnresolvedImportCode);
         }
 
-        private void ImportModule(in ImportStatement node, in IModule module, in DottedName moduleImportExpression, in NameExpression asNameExpression) {
+        private void ImportModule(in Node node, in IModule module, in DottedName moduleImportExpression, in NameExpression asNameExpression) {
             // "import fob.oar as baz" is handled as
             // baz = import_module('fob.oar')
             if (asNameExpression != null) {
-                AssignImportedModuleOrMember(asNameExpression.Name, module, true, node.Names.LastOrDefault(), asNameExpression);
+                AssignImportedModuleOrMember(asNameExpression.Name, module, true, node, asNameExpression);
                 return;
             }
 
