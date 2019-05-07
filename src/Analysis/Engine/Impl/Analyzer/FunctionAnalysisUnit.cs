@@ -72,11 +72,18 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             return base.GetDeclaringModule() ?? _declUnit.DeclaringModule;
         }
 
-        protected internal override AnalysisUnit GetExternalAnnotationAnalysisUnit() {
+        IVariableDefinition GetExternalAnnotationVariableDefinition() {
             var parentAnnotation = _declUnit.GetExternalAnnotationAnalysisUnit();
             if (parentAnnotation == null)
                 return null;
-            if (!parentAnnotation.Scope.TryGetVariable(Ast.Name, out var annotationVariable))
+            return parentAnnotation.Scope.TryGetVariable(Ast.Name, out var annotationVariable)
+                ? annotationVariable
+                : null;
+        }
+
+        protected internal override AnalysisUnit GetExternalAnnotationAnalysisUnit() {
+            var annotationVariable = this.GetExternalAnnotationVariableDefinition();
+            if (annotationVariable == null)
                 return null;
             if (annotationVariable.Types is FunctionInfo functionAnnotation)
                 return functionAnnotation.AnalysisUnit;
@@ -98,6 +105,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
             // Set the scope to within the function
             ddg.Scope = InterpreterScope;
+
+            if (this.GetExternalAnnotationVariableDefinition() is VariableDef annotationsVariable) {
+                annotationsVariable.AddDependency(this);
+            }
 
             Ast.Body.Walk(ddg);
 
