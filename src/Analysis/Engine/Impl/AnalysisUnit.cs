@@ -393,13 +393,14 @@ namespace Microsoft.PythonTools.Analysis {
                     bases.Add(ddg.ProjectState.ClassInfos[BuiltinTypeId.Object]);
                 }
             } else {
+                bool newBases = false;
                 // Process base classes
                 for (var i = 0; i < Ast.Bases.Length; i++) {
                     var baseClassArg = Ast.Bases[i];
 
                     if (baseClassArg.Name == null) {
-                        bases.Add(EvaluateBaseClass(ddg, classInfo, i, baseClassArg.Expression));
-
+                        bases.Add(EvaluateBaseClass(ddg, classInfo, baseClassArg.Expression, out bool isNewBase));
+                        newBases |= isNewBase;
                     } else if (baseClassArg.Name == "metaclass") {
                         var metaClass = baseClassArg.Expression;
                         metaClass.Walk(ddg);
@@ -409,6 +410,8 @@ namespace Microsoft.PythonTools.Analysis {
                         }
                     }
                 }
+                if (newBases)
+                    classInfo.PropagateFunctionTypes();
             }
 
             classInfo.SetBases(bases);
@@ -464,22 +467,24 @@ namespace Microsoft.PythonTools.Analysis {
             return types;
         }
 
-        internal static IAnalysisSet EvaluateBaseClass(DDG ddg, ClassInfo newClass, int indexInBaseList, Expression baseClass) {
+        internal static IAnalysisSet EvaluateBaseClass(DDG ddg, ClassInfo newClass, Expression baseClass, out bool isNew) {
             baseClass.Walk(ddg);
             var bases = ddg._eval.Evaluate(baseClass);
 
             var userBases = bases.OfType<ClassInfo>().ToList();
+            var updated = new List<ClassInfo>(userBases.Capacity);
 
             foreach (var ci in userBases) {
                 if (!ci._mro.IsValid) {
                     ci._mro.Recompute();
                 }
-                ci.SubClasses.AddTypes(newClass.AnalysisUnit, newClass);
+                if (ci.SubClasses.AddTypes(newClass.AnalysisUnit, newClass))
+                    updated.Add(ci);
             }
 
-            if (userBases.Count > 0) {
-                newClass.PropagateFunctionTypes();
-                foreach (ClassInfo @base in userBases) {
+            isNew = updated.Count > 0;
+            if (isNew) {
+                foreach (ClassInfo @base in updated) {
                     @base.PropagateFunctionTypes();
                 }
             }
