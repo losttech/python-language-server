@@ -277,12 +277,14 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
     }
 
-    class IteratorProtocol : Protocol {
+    class IteratorProtocol : Protocol, IItemContainerInfo {
         protected readonly IAnalysisSet _yielded;
 
         public IteratorProtocol(ProtocolInfo self, IAnalysisSet yielded) : base(self) {
             _yielded = yielded.AsUnion(1);
         }
+
+        IAnalysisSet IItemContainerInfo.Item => _yielded;
 
         protected override void EnsureMembers(IDictionary<string, IAnalysisSet> members) {
             if (Self.DeclaringModule?.Tree?.LanguageVersion.Is3x() ?? true) {
@@ -509,7 +511,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
     }
 
-    class MappingProtocol : IterableProtocol {
+    class MappingProtocol : IterableProtocol, IKeyValueInfo {
         private readonly IAnalysisSet _keyType, _valueType, _itemType;
 
         public MappingProtocol(ProtocolInfo self, IAnalysisSet keys, IAnalysisSet values, IAnalysisSet items) : base(self, keys) {
@@ -610,6 +612,9 @@ namespace Microsoft.PythonTools.Analysis.Values {
             }
             return this;
         }
+
+        public virtual IAnalysisSet Key => _keyType;
+        public virtual IAnalysisSet Value => _valueType;
     }
 
     class GeneratorProtocol : IteratorProtocol {

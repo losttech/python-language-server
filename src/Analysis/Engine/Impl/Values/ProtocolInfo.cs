@@ -27,7 +27,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
     /// <summary>
     /// Represents a value that implements one or more protocols.
     /// </summary>
-    class ProtocolInfo : AnalysisValue, IHasRichDescription {
+    class ProtocolInfo : AnalysisValue, IProtocolInfo, IHasRichDescription {
         private IAnalysisSet _protocols;
         private readonly ReferenceDict _references;
 
@@ -45,6 +45,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         internal PythonAnalyzer State { get; }
+        public IEnumerable<IAnalysisValue> Protocols => _protocols;
 
         public void AddProtocol(Protocol p) {
             _protocols = _protocols.Add(p);
