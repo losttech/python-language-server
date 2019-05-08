@@ -209,8 +209,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             IVariableDefinition param;
             var annotationAnalysis = GetExternalAnnotationAnalysisUnit() as FunctionAnalysisUnit;
             var functionAnnotation = annotationAnalysis?.Function.FunctionDefinition;
-            if (functionAnnotation?.Parameters.Length != Ast.Parameters.Length)
+            if (functionAnnotation?.Parameters.Length != Ast.Parameters.Length) {
+                AnalysisLog.Add("AnnotationParameterCountMismatch", Scope.Name, Scope.OuterScope.Name);
                 functionAnnotation = null;
+            }
 
             bool overwriteWithAnnotations = ProjectEntry.ProjectState.Limits.UseTypeStubPackagesExclusively;
 
@@ -309,22 +311,23 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
         private FunctionScope FunctionScope => (FunctionScope)Scope;
 
         private bool AddParameterTypes(FunctionScope functionScope, string name, IAnalysisSet types, bool overwrite) {
+            bool added = false;
             if (!functionScope.TryGetVariable(name, out var param))
-                return false;
+                return added;
             if (overwrite) {
-                param.SetTypes(ProjectEntry, types, false);
+                added |= param.SetTypes(ProjectEntry, types, false);
                 param.Lock();
             } else
-                param.AddTypes(this, types, false);
+                added |= param.AddTypes(this, types, false);
             var vd = functionScope.GetParameter(name);
             if (vd != null && vd != param) {
                 if (overwrite) {
-                    vd.SetTypes(ProjectEntry, types, false);
+                    added |= vd.SetTypes(ProjectEntry, types, false);
                     vd.Lock();
                 }  else
-                    vd.AddTypes(this, types, false);
+                    added |= vd.AddTypes(this, types, false);
             }
-            return true;
+            return added;
         }
 
         private bool AddParameterTypes(string name, IAnalysisSet types, bool overwrite) {
