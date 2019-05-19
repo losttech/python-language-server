@@ -23,7 +23,7 @@ using Microsoft.PythonTools.Parsing;
 using Microsoft.PythonTools.Parsing.Ast;
 
 namespace Microsoft.PythonTools.Analysis.Values {
-    class SequenceBuiltinInstanceInfo : BaseIterableValue {
+    class SequenceBuiltinInstanceInfo : BaseIterableValue, IItemContainerInfo {
         private readonly bool _supportsMod;
 
         public SequenceBuiltinInstanceInfo(BuiltinClassInfo classInfo, bool sequenceOfSelf, bool supportsMod)
@@ -40,6 +40,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         protected override void EnsureUnionType() { }
+
+        public IAnalysisSet Item => this.UnionType;
 
         protected override IAnalysisSet MakeIteratorInfo(Node n, AnalysisUnit unit) {
             return new FixedIteratorValue(

@@ -233,7 +233,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public override int GetHashCode() => Name.GetHashCode();
     }
 
-    class IterableProtocol : Protocol {
+    class IterableProtocol : Protocol, IItemContainerInfo {
         protected readonly IAnalysisSet _iterator;
         protected readonly IAnalysisSet _yielded;
 
@@ -251,6 +251,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         public override IAnalysisSet GetIterator(Node node, AnalysisUnit unit) => _iterator;
         public override IAnalysisSet GetEnumeratorTypes(Node node, AnalysisUnit unit) => _yielded;
+        public IAnalysisSet Item => _yielded;
 
         public override IEnumerable<KeyValuePair<string, string>> GetRichDescription() {
             if (_yielded.Any()) {

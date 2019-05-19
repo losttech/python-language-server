@@ -26,7 +26,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
     /// Represents a generator instance - either constructed using a generator expression or
     /// by calling a function definition which contains yield expressions.
     /// </summary>
-    internal class GeneratorInfo : BuiltinInstanceInfo, IGeneratorInfo, IHasRichDescription {
+    internal class GeneratorInfo : BuiltinInstanceInfo, IGeneratorInfo, IHasRichDescription, IItemContainerInfo {
         private AnalysisValue _nextMethod;
         private AnalysisValue _sendMethod;
         private readonly IPythonProjectEntry _declaringModule;
@@ -47,6 +47,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         public override IPythonProjectEntry DeclaringModule { get { return _declaringModule; } }
         public override int DeclaringVersion { get { return _declaringVersion; } }
+        public IAnalysisSet Item => this.Yields.Types;
 
         public override string Description => string.Join("", GetRichDescription().Select(kv => kv.Value));
         public override string ShortDescription => string.Join("", GetRichDescription().TakeWhile(kv => kv.Key != WellKnownRichDescriptionKinds.EndOfDeclaration).Select(kv => kv.Value));
