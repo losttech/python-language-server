@@ -63,6 +63,7 @@ namespace Microsoft.PythonTools.Analysis {
                 _externalAnnotationAnalysisUnit = new Lazy<AnalysisUnit>(GetExternalAnalysisUnitImpl);
             _scope = scope;
             ForEval = forEval;
+            declaringModule = new Lazy<ModuleInfo>(this.GetDeclaringModuleImpl);
         }
 
         /// <summary>
@@ -78,7 +79,9 @@ namespace Microsoft.PythonTools.Analysis {
 
         public virtual bool IsAlive => _scope?.AnalysisValue?.IsAlive ?? true;
 
-        internal virtual ModuleInfo GetDeclaringModule() {
+        readonly Lazy<ModuleInfo> declaringModule;
+        internal virtual ModuleInfo GetDeclaringModule() => this.declaringModule.Value;
+        internal ModuleInfo GetDeclaringModuleImpl() {
             if (_scope != null) {
                 var moduleScope = _scope.EnumerateTowardsGlobal.OfType<ModuleScope>().FirstOrDefault();
                 if (moduleScope != null) {
