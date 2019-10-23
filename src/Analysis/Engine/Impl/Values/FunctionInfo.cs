@@ -254,19 +254,22 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
             IAnalysisSet newTypes = _analysisUnit.ReturnValue.Types;
             classInfo = classInfo ?? ((ClassScope)AnalysisUnit.Scope.OuterScope).Class;
-            var linked = classInfo.TraverseTransitivelyLinked(c => c.GetReturnTypePropagationLinks().OfType<ClassInfo>());
+            classInfo.TraverseTransitivelyLinked(
+                c => c.GetReturnTypePropagationLinks().OfType<ClassInfo>(),
+                enter: linkedClass => {
+                    if (!linkedClass.Scope.TryGetVariable(Name, out var linkedFunctionVariable))
+                        return true;
 
-            foreach (ClassInfo linkedClass in linked) {
-                if (!linkedClass.Scope.TryGetVariable(Name, out var linkedFunctionVariable)) continue;
-                var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
-                VariableDef returnValue = linkedFunction?._analysisUnit.ReturnValue;
-                if (@lock) {
-                    returnValue?.SetTypes(_analysisUnit.ProjectEntry, newTypes);
-                    returnValue?.Lock();
-                } else {
-                    returnValue?.AddTypes(_analysisUnit, newTypes);
-                }
-            }
+                    var linkedFunction = linkedFunctionVariable.Types as FunctionInfo;
+                    VariableDef returnValue = linkedFunction?._analysisUnit.ReturnValue;
+                    if (@lock) {
+                        bool @continue = returnValue?.SetTypes(_analysisUnit.ProjectEntry, newTypes) != false;
+                        returnValue?.Lock();
+                        return @continue;
+                    } else {
+                        return returnValue?.AddTypes(_analysisUnit, newTypes) != false;
+                    }
+                });
         }
 
         internal void AddParameterReference(Node node, AnalysisUnit unit, string name) {
