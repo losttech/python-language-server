@@ -244,6 +244,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 });
         }
 
+        int nextLevel = 10000;
+        int propagations;
         internal void PropagateReturnType(ClassInfo classInfo = null) {
             bool @lock = _analysisUnit.ReturnValue.IsLocked && ProjectState.Limits.PropagateReturnTypesToDerivedMethods;
             if (!@lock) {
@@ -267,6 +269,12 @@ namespace Microsoft.PythonTools.Analysis.Values {
                         returnValue?.Lock();
                         return @continue;
                     } else {
+                        propagations++;
+                        if (propagations >= nextLevel) {
+                            nextLevel *= 10;
+                            Debug.WriteLine($"{propagations} propagations on {this}");
+                        }
+
                         return returnValue?.AddTypes(_analysisUnit, newTypes) != false;
                     }
                 });
