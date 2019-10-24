@@ -289,6 +289,12 @@ namespace Microsoft.PythonTools.Analysis {
         }
 
         public bool SetTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
+            if (IsLocked) {
+                if (newTypes.Count > this.Types.Count) {
+                    Debug.WriteLine("Extra types to be added to VariableDef despite it being locked");
+                } else
+                    return false;
+            }
             bool changed = SetTypesForSingleEntry(projectEntry, newTypes, enqueue, declaringScope);
             foreach (IVersioned otherEntry in _dependencies.Keys) {
                 changed |= SetTypesForSingleEntry(otherEntry, newTypes, enqueue, declaringScope);
@@ -464,7 +470,9 @@ namespace Microsoft.PythonTools.Analysis {
         /// ignored in many cases, since modifications will reenqueue dependent
         /// units automatically.</returns>
         internal bool MakeUnionStrongerIfMoreThan(int typeCount, IAnalysisSet extraTypes = null) {
-            if (EstimateTypeCount(extraTypes) >= typeCount) {
+            if (extraTypes == null || extraTypes.Count == 0) return false;
+
+            if (extraTypes.Count >= typeCount || EstimateTypeCount(extraTypes) >= typeCount) {
                 return MakeUnionStronger();
             }
             return false;
