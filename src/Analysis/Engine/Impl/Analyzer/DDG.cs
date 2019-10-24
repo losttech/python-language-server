@@ -60,8 +60,8 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
                     if (_unit == endOfQueueMarker) {
                         AnalysisLog.EndOfQueue(queueCountAtStart, queue.Count);
-                        if (reportInterval < 0 && reportQueueSize != null) {
-                            reportQueueSize(queue.Count);
+                        if (reportInterval < 0) {
+                            reportQueueSize?.Invoke(queue.Count);
                         }
 
                         queueCountAtStart = queue.Count;
@@ -90,12 +90,10 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     _unit.Analyze(this, unitCancellation);
                 }
 
-                if (reportQueueSize != null) {
-                    reportQueueSize(0);
-                }
-
                 if (cancel.IsCancellationRequested) {
                     AnalysisLog.Cancelled(queue);
+                } else {
+                    reportQueueSize?.Invoke(0);
                 }
             } finally {
                 AnalysisLog.Flush();
