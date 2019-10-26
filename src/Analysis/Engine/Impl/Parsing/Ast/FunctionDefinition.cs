@@ -72,7 +72,11 @@ namespace Microsoft.PythonTools.Parsing.Ast {
 
         public DecoratorStatement Decorators { get; internal set; }
 
-        internal LambdaExpression LambdaExpression { get; set; }
+        /// <summary>
+        /// If a function is a lambda expression (<see cref="IsLambda"/>),
+        /// this might contain a reference to that expression.
+        /// </summary>
+        public LambdaExpression LambdaExpression { get; internal set; }
 
         /// <summary>
         /// True if the function is a generator.  Generators contain at least one yield
