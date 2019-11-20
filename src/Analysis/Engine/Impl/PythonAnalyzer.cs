@@ -77,8 +77,8 @@ namespace Microsoft.PythonTools.Analysis {
 
             return analyzer;
         }
-        
-        internal PythonAnalyzer(IPythonInterpreterFactory factory) {
+
+        protected internal PythonAnalyzer(IPythonInterpreterFactory factory) {
             InterpreterFactory = factory;
             LanguageVersion = factory.GetLanguageVersion();
             Interpreter = factory.CreateInterpreter();
@@ -170,6 +170,9 @@ namespace Microsoft.PythonTools.Analysis {
                 _reloadLock.Release();
             }
         }
+
+        protected internal virtual bool IsPublicMember(IModule module, string name)
+            => !name.StartsWithOrdinal("_");
 
         #region Public API
 

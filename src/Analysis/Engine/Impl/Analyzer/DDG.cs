@@ -336,7 +336,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 // import all module public members
                 var publicMembers = module
                     .GetModuleMemberNames(GlobalScope.InterpreterContext)
-                    .Where(n => !n.StartsWithOrdinal("_"));
+                    .Where(n => _unit.State.IsPublicMember(module, n));
                 foreach (var member in publicMembers) {
                     // Don't add references to "*" node
                     SetVariableForImportedMember(module, names[0], member, null, member, false);
