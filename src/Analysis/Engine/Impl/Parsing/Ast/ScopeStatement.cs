@@ -389,5 +389,21 @@ namespace Microsoft.PythonTools.Parsing.Ast {
                 AccessedInScope = accessedInScope;
             }
         }
+
+        protected virtual void CloneTo(ScopeStatement other) {
+            if (other == null) throw new ArgumentNullException(nameof(other));
+
+            other.ContainsExceptionHandling = this.ContainsExceptionHandling;
+            other.ContainsImportStar = this.ContainsImportStar;
+            other.ContainsNestedFreeVariables = this.ContainsNestedFreeVariables;
+            other.ContainsUnqualifiedExec = this.ContainsUnqualifiedExec;
+            other.EndIndex = this.EndIndex;
+            other.HasLateBoundVariableSets = this.HasLateBoundVariableSets;
+            other.IndexSpan = this.IndexSpan;
+            other.Parent = this.Parent;
+            other.StartIndex = this.StartIndex;
+
+            // TODO: copy variables
+        }
     }
 }

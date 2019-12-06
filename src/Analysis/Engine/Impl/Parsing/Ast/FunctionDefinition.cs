@@ -72,6 +72,35 @@ namespace Microsoft.PythonTools.Parsing.Ast {
 
         public DecoratorStatement Decorators { get; internal set; }
 
+        public FunctionDefinition WithDecorators(Expression[] decorators) {
+            if (decorators == null) throw new ArgumentNullException(nameof(decorators));
+            var result = new FunctionDefinition(this.NameExpression, this.Parameters, this.Body, new DecoratorStatement(decorators));
+            this.CloneTo(result);
+            return result;
+        }
+
+        protected override void CloneTo(ScopeStatement other) {
+            if (other == null) throw new ArgumentNullException(nameof(other));
+            if (!(other is FunctionDefinition otherFunction))
+                throw new ArgumentException(
+                    message: "Can only clone to other " + nameof(FunctionDefinition),
+                    paramName: nameof(other));
+
+            var otherAsFunction = (FunctionDefinition)other;
+
+            base.CloneTo(other);
+
+            otherAsFunction._keywordEndIndex = _keywordEndIndex;
+
+            otherAsFunction.DefIndex = this.DefIndex;
+            otherAsFunction.HeaderIndex = this.HeaderIndex;
+            otherAsFunction.IsCoroutine = this.IsCoroutine;
+            otherAsFunction.IsGenerator = this.IsGenerator;
+            otherAsFunction.LambdaExpression = this.LambdaExpression;
+            otherAsFunction.ReturnAnnotation = this.ReturnAnnotation;
+            otherAsFunction.Variable = this.Variable;
+        }
+
         /// <summary>
         /// If a function is a lambda expression (<see cref="IsLambda"/>),
         /// this might contain a reference to that expression.
