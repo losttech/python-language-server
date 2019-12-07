@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace Microsoft.PythonTools.Parsing.Ast {
+    [DebuggerDisplay("class: {"+nameof(Name)+"}")]
     public class ClassDefinition : ScopeStatement {
         private int _headerIndex;
         private readonly NameExpression/*!*/ _name;

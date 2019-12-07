@@ -20,7 +20,7 @@ using System.Text;
 using Microsoft.PythonTools.Analysis.Infrastructure;
 
 namespace Microsoft.PythonTools.Parsing.Ast {
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("fn def: {"+nameof(Name)+"}")]
     public class FunctionDefinition : ScopeStatement, IMaybeAsyncStatement {
         internal static readonly object WhitespaceAfterAsync = new object();
 

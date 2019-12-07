@@ -15,12 +15,14 @@
 // permissions and limitations under the License.
 
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace Microsoft.PythonTools.Parsing.Ast {
     /// <summary>
     /// Parameter base class
     /// </summary>
+    [DebuggerDisplay("param: {"+nameof(Name)+"}")]
     public class Parameter : Node {
         /// <summary>
         /// Position of the parameter: 0-based index
