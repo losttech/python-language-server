@@ -11,7 +11,7 @@
       1998 - "This async method lacks 'await'"
     -->
     <NoWarn>1701;1702;1998;$(NoWarn)</NoWarn>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>

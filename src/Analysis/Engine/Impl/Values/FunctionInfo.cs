@@ -78,6 +78,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public override IPythonProjectEntry DeclaringModule => _analysisUnit.ProjectEntry;
 
         public FunctionDefinition FunctionDefinition { get; }
+        public FunctionAnalysisUnit FunctionAnalysisUnit => _analysisUnit;
 
         public override AnalysisUnit AnalysisUnit => _analysisUnit;
 
@@ -85,7 +86,10 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         public bool IsStatic { get; set; }
         public bool IsClassMethod { get; set; }
-        public bool IsProperty { get; set; }
+        public bool IsProperty => this.Property != null;
+        public PropertyInfo Property { get; internal set; }
+        public bool IsGetter => ReferenceEquals(this.Property?.Getter, this);
+        public bool IsSetter => ReferenceEquals(this.Property?.Setter, this);
         public bool IsAbstract { get; internal set; }
         public bool IsClosure => _callsWithClosure != null;
 
@@ -898,5 +902,10 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         #endregion
 
+        #region IFunctionInfo2 Members
+
+        IPropertyInfo IFunctionInfo2.Property => this.Property;
+
+        #endregion
     }
 }

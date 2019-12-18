@@ -146,7 +146,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         res = true;
                         break;
                     case "abstractproperty":
-                        Function.IsProperty = true;
+                        this.ProcessGetterDecorator();
                         Function.IsAbstract = true;
                         res = true;
                         break;
@@ -154,6 +154,66 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             }
 
             return res;
+        }
+
+        private bool ProcessSetterDecorator(Expression decorator, ExpressionEvaluator eval) {
+            if (!(decorator is MemberExpression setter
+                  && setter.Name == "setter"))
+                return false;
+
+            if (Function.FunctionDefinition.Parameters.Length != 2)
+                // TODO: emit warning
+                return false;
+
+            if (!(this.Scope.OuterScope is ClassScope))
+                // TODO: emit warning
+                return false;
+
+            var getter = eval.Evaluate(setter.Target);
+            if (getter.Count == 0)
+                return false;
+
+            bool getterFound = false;
+            foreach (var potentialGetter in getter.OfType<FunctionInfo>()) {
+                if (ReferenceEquals(potentialGetter, Function)) continue;
+
+                if (!potentialGetter.IsProperty)
+                    continue;
+
+                System.Diagnostics.Debug.Assert(!getterFound);
+
+                potentialGetter.Property ??= new PropertyInfo {
+                    Getter = potentialGetter,
+                };
+                potentialGetter.Property.Setter = Function;
+                Function.Property = potentialGetter.Property;
+
+                var valueParameter = FunctionScope.GetParameter(Function.FunctionDefinition.Parameters[1].Name);
+
+                potentialGetter.FunctionAnalysisUnit.FunctionScope
+                    .AddReturnTypes(decorator, this, valueParameter.Types);
+                potentialGetter.PropagateReturnType();
+
+                valueParameter.AddTypes(this, potentialGetter.GetReturnValue(), enqueue: false);
+                Function.PropagateParameterTypes();
+
+                getterFound = true;
+            }
+            return true;
+        }
+
+        private void ProcessGetterDecorator() {
+            if (Function.FunctionDefinition.Parameters.Length != 1)
+                // TODO: emit warning
+                return;
+
+            if (!(this.Scope.OuterScope is ClassScope))
+                // TODO: emit warning
+                return;
+
+            // this assumes getters are always declared first
+            System.Diagnostics.Debug.Assert(Function.Property == null || Function.IsGetter);
+            Function.Property ??= new PropertyInfo {Getter = Function};
         }
 
         internal IAnalysisSet ProcessFunctionDecorators(DDG ddg) {
@@ -165,7 +225,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     var decorator = ddg._eval.Evaluate(d);
 
                     if (decorator.Contains(State.ClassInfos[BuiltinTypeId.Property])) {
-                        Function.IsProperty = true;
+                        ProcessGetterDecorator();
                     } else if (decorator.Contains(State.ClassInfos[BuiltinTypeId.StaticMethod])) {
                         // TODO: Warn if IsClassMethod is set
                         Function.IsStatic = true;
@@ -173,6 +233,8 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                         // TODO: Warn if IsStatic is set
                         Function.IsClassMethod = true;
                     } else if (ProcessAbstractDecorators(decorator)) {
+                        // No-op
+                    } else if (ProcessSetterDecorator(d, ddg._eval)) {
                         // No-op
                     } else {
                         Expression nextExpr;
