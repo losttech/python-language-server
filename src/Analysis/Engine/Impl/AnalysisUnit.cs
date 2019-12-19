@@ -386,6 +386,7 @@ namespace Microsoft.PythonTools.Analysis {
 
             var classInfo = ((ClassScope)Scope).Class;
             var bases = new List<IAnalysisSet>();
+            var newBases = new List<IAnalysisSet>();
 
             if (Ast.Bases.Length == 0) {
                 if (ddg.ProjectState.LanguageVersion.Is3x()) {
@@ -393,14 +394,14 @@ namespace Microsoft.PythonTools.Analysis {
                     bases.Add(ddg.ProjectState.ClassInfos[BuiltinTypeId.Object]);
                 }
             } else {
-                bool newBases = false;
                 // Process base classes
                 for (var i = 0; i < Ast.Bases.Length; i++) {
                     var baseClassArg = Ast.Bases[i];
 
                     if (baseClassArg.Name == null) {
-                        bases.Add(EvaluateBaseClass(ddg, classInfo, baseClassArg.Expression, out bool isNewBase));
-                        newBases |= isNewBase;
+                        IAnalysisSet @base = EvaluateBaseClass(ddg, classInfo, baseClassArg.Expression, out bool isNewBase);
+                        bases.Add(@base);
+                        if (isNewBase) newBases.Add(@base);
                     } else if (baseClassArg.Name == "metaclass") {
                         var metaClass = baseClassArg.Expression;
                         metaClass.Walk(ddg);
@@ -410,8 +411,6 @@ namespace Microsoft.PythonTools.Analysis {
                         }
                     }
                 }
-                if (newBases)
-                    classInfo.PropagateFunctionTypes();
             }
 
             classInfo.SetBases(bases);
@@ -422,6 +421,12 @@ namespace Microsoft.PythonTools.Analysis {
                 }
             }
 
+            if (newBases.Count > 0) {
+                classInfo.PropagateFunctionTypes();
+                foreach (ClassInfo @base in newBases.SelectMany(c => c.OfType<ClassInfo>())) {
+                    @base.PropagateFunctionTypes();
+                }
+            }
 
             ddg.SetCurrentUnit(this);
             ddg.WalkBody(Ast.Body, classInfo.AnalysisUnit);
@@ -483,11 +488,6 @@ namespace Microsoft.PythonTools.Analysis {
             }
 
             isNew = updated.Count > 0;
-            if (isNew) {
-                foreach (ClassInfo @base in updated) {
-                    @base.PropagateFunctionTypes();
-                }
-            }
 
             return bases;
         }
