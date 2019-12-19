@@ -105,7 +105,7 @@ namespace Microsoft.PythonTools.Parsing.Ast {
         /// If a function is a lambda expression (<see cref="IsLambda"/>),
         /// this might contain a reference to that expression.
         /// </summary>
-        public LambdaExpression LambdaExpression { get; internal set; }
+        public LambdaExpression LambdaExpression { get; set; }
 
         /// <summary>
         /// True if the function is a generator.  Generators contain at least one yield
