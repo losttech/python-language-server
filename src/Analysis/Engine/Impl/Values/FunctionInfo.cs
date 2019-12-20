@@ -88,8 +88,6 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public bool IsClassMethod { get; set; }
         public bool IsProperty => this.Property != null;
         public PropertyInfo Property { get; internal set; }
-        public bool IsGetter => ReferenceEquals(this.Property?.Getter, this);
-        public bool IsSetter => ReferenceEquals(this.Property?.Setter, this);
         public bool IsAbstract { get; internal set; }
         public bool IsClosure => _callsWithClosure != null;
 

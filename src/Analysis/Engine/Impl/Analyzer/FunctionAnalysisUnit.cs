@@ -212,7 +212,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                 return;
 
             // this assumes getters are always declared first
-            System.Diagnostics.Debug.Assert(Function.Property == null || Function.IsGetter);
+            System.Diagnostics.Debug.Assert(Function.Property == null || Function.IsGetter());
             Function.Property ??= new PropertyInfo {Getter = Function};
         }
 
