@@ -65,5 +65,11 @@ namespace Microsoft.Python.LanguageServer {
         }
 
         public readonly PythonCompletionOptions completion = new PythonCompletionOptions();
+
+        public class DebuggingOptions {
+            public bool enableAsserts = true;
+        }
+
+        public readonly DebuggingOptions debugging = new DebuggingOptions();
     }
 }

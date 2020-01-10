@@ -119,7 +119,8 @@ namespace Microsoft.Python.LanguageServer.Implementation {
         }
 
         private void Analysis_UnhandledException(object sender, UnhandledExceptionEventArgs e) {
-            Debug.Fail(e.ExceptionObject.ToString());
+            if (Settings.debugging.enableAsserts)
+                Debug.Fail(e.ExceptionObject.ToString());
             LogMessage(MessageType.Error, e.ExceptionObject.ToString());
         }
 
@@ -486,7 +487,7 @@ namespace Microsoft.Python.LanguageServer.Implementation {
             var scheme = uri.Scheme;
             var path = uri.GetComponents(UriComponents.Path, UriFormat.SafeUnescaped).Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var bits = new List<string>(path.Length + 2);
-            bits.Add("_:"); // Non-existent root
+            bits.Add("a:"); // Non-existent root
             bits.Add(scheme.ToUpperInvariant());
             bits.AddRange(path);
             return string.Join(Path.DirectorySeparatorChar.ToString(), bits);

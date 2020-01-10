@@ -79,7 +79,14 @@ namespace AnalysisTests {
         public async Task<Server> CreateServer(Uri rootUri, InterpreterConfiguration configuration = null, Dictionary<Uri, PublishDiagnosticsEventArgs> diagnosticEvents = null) {
             configuration = configuration ?? Default;
             configuration.AssertInstalled();
-            var s = new Server();
+            var s = new Server {
+                Settings = {
+                    debugging = {
+                        // asserts cause test engine crashes
+                        enableAsserts = false,
+                    }
+                }
+            };
             s.OnLogMessage += Server_OnLogMessage;
             var properties = new InterpreterFactoryCreationOptions {
                 TraceLevel = System.Diagnostics.TraceLevel.Verbose,
