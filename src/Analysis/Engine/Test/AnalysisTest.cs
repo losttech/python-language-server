@@ -4095,6 +4095,20 @@ t.x, t. =
             }
         }
 
+        [TestMethod, Priority(1)]
+        public async Task UnpackAssign() {
+            string code = @"
+l = [1,1]
+l, = l
+";
+
+            using (var server = await CreateServerAsync()) {
+                var analysis = await server.OpenDefaultDocumentAndGetAnalysisAsync(code);
+
+                analysis.Should().HaveVariable("l").OfTypes(BuiltinTypeId.Int, BuiltinTypeId.List);
+            }
+        }
+
         [TestMethod, Priority(0)]
         public async Task CancelAnalysis() {
             var configuration = PythonVersions.LatestAvailable;
