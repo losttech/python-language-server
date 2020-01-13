@@ -302,7 +302,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             }
 
             if (importedMember.IsNullOrEmpty()) {
-                importedMember = null;
+                importedMember = this.ProjectState.TryGetModule(module.Name + "." + importNameExpression.Name);
             }
 
             AssignImportedModuleOrMember(variableName, importedMember, addRef, importNameExpression, variableExpression);
