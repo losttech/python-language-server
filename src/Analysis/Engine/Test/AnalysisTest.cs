@@ -4109,6 +4109,24 @@ l, = l
             }
         }
 
+        [TestMethod, Priority(1)]
+        public async Task UnpackAssignSpecializedList() {
+            string code = @"
+from typing import List
+
+def get_int_list(l) -> List[int]:
+    return [1,1,1]
+
+_, _, e = get_int_list([1,1,1])
+";
+
+            using (var server = await CreateServerAsync(PythonVersions.LatestAvailable3X)) {
+                var analysis = await server.OpenDefaultDocumentAndGetAnalysisAsync(code);
+
+                analysis.Should().HaveVariable("e").OfTypes(BuiltinTypeId.Int);
+            }
+        }
+
         [TestMethod, Priority(0)]
         public async Task CancelAnalysis() {
             var configuration = PythonVersions.LatestAvailable;
