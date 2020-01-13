@@ -66,6 +66,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             }
 
             if (types?.Any() != true) {
+                ReturnValue.AddDependency(unit);
                 return;
             }
             if (Coroutine != null) {
