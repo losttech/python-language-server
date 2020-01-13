@@ -290,10 +290,7 @@ namespace Microsoft.PythonTools.Analysis {
 
         public bool SetTypes(IVersioned projectEntry, IAnalysisSet newTypes, bool enqueue = true, IProjectEntry declaringScope = null) {
             if (IsLocked) {
-                if (newTypes.Count > this.Types.Count) {
-                    Debug.WriteLine("Extra types to be added to VariableDef despite it being locked");
-                } else
-                    return false;
+                Debug.WriteLine("Extra types to be added to VariableDef despite it being locked");
             }
             bool changed = SetTypesForSingleEntry(projectEntry, newTypes, enqueue, declaringScope);
             foreach (IVersioned otherEntry in _dependencies.Keys) {
