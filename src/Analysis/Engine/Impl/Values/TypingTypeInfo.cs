@@ -26,7 +26,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
     /// <summary>
     /// Represents better view on an existing type, typically generic.
     /// </summary>
-    class TypingTypeInfo : AnalysisValue, IHasRichDescription {
+    class TypingTypeInfo : AnalysisValue, ITypingTypeInfo, IHasRichDescription {
         private readonly AnalysisValue _innerValue;
         private readonly string _typeName;
         private readonly IReadOnlyList<IAnalysisSet> _typeArgs;
@@ -164,6 +164,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         public override string Description => base.Description ?? _innerValue?.Description; 
         public override string Documentation => base.Documentation ?? _innerValue?.Documentation;
+
+        public IBuiltinClassInfo TypingClass => (IBuiltinClassInfo)_innerValue;
 
         public override bool Equals(object obj) {
             if (obj is TypingTypeInfo other) {
