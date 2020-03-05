@@ -116,6 +116,6 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return false;
         }
 
-        public override int GetHashCode() => new { hc1 = GetType().GetHashCode(), hc2 = Type?.GetHashCode() }.GetHashCode();
+        public override int GetHashCode() => new { hc1 = GetType().FullName.GetHashCode(), hc2 = Type?.GetHashCode() }.GetHashCode();
     }
 }

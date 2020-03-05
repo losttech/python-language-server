@@ -115,7 +115,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return false;
         }
 
-        public override int GetHashCode() => GetType().GetHashCode();
+        public override int GetHashCode() => GetType().FullName.GetHashCode();
 
         protected virtual bool UnionEquals(Protocol p) => Equals(p);
         protected virtual Protocol UnionMergeTypes(Protocol p) => this;
@@ -162,7 +162,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public override IEnumerable<KeyValuePair<string, string>> GetRichDescription() => _richDescription;
 
         protected override bool Equals(Protocol other) => Name == other.Name;
-        public override int GetHashCode() => new { Type = GetType(), Name }.GetHashCode();
+        public override int GetHashCode() => new { Type = GetType().FullName, Name }.GetHashCode();
     }
 
     class CallableProtocol : Protocol {
@@ -734,7 +734,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         protected override bool Equals(Protocol other) => Name == other.Name;
-        public override int GetHashCode() => new { Type = GetType(), Name }.GetHashCode();
+        public override int GetHashCode() => new { Type = GetType().FullName, Name }.GetHashCode();
 
         protected override bool UnionEquals(Protocol p) => Equals(p);
         internal override int UnionHashCode(int strength) => GetHashCode();
@@ -755,7 +755,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public override IAnalysisSet Call(Node node, AnalysisUnit unit, IAnalysisSet[] args, NameExpression[] keywordArgNames) => ReturnType;
 
         protected override bool Equals(Protocol other) => ReturnType.SetEquals(((InstanceProtocol)other).ReturnType);
-        public override int GetHashCode() => GetType().GetHashCode();
+        public override int GetHashCode() => GetType().FullName.GetHashCode();
 
         protected override bool UnionEquals(Protocol p) => Equals(p);
         internal override int UnionHashCode(int strength) => GetHashCode();

@@ -99,7 +99,7 @@ namespace Microsoft.PythonTools.Analysis {
                     x.EndColumn == x.EndColumn;
             }
 
-            public int GetHashCode(LocationInfo obj) => GetHashCode(obj);
+            public int GetHashCode(LocationInfo obj) => GetHashCode((ILocationInfo)obj);
 
             public int GetHashCode(ILocationInfo obj)
                 => obj.StartLine.GetHashCode() ^ obj.StartColumn.GetHashCode() ^ (obj.FilePath?.GetHashCode() ?? 0);

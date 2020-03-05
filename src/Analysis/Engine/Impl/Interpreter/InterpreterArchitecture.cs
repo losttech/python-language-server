@@ -114,7 +114,7 @@ namespace Microsoft.PythonTools.Interpreter {
             => !(x?.Equals(y) ?? object.ReferenceEquals(y, null));
         public override bool Equals(object obj) => Equals(obj as InterpreterArchitecture);
         public bool Equals(InterpreterArchitecture other) => other != null && GetType().IsEquivalentTo(other.GetType());
-        public override int GetHashCode() => GetType().GetHashCode();
+        public override int GetHashCode() => GetType().FullName.GetHashCode();
 
         private sealed class UnknownArchitecture : InterpreterArchitecture {
             public UnknownArchitecture() { }

@@ -332,7 +332,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public override int GetHashCode() {
-            return GetType().GetHashCode() ^ _node.GetHashCode();
+            return GetType().FullName.GetHashCode() ^ _node.GetHashCode();
         }
 
         public override string ToString() {
@@ -406,7 +406,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public override int GetHashCode() {
-            return typeof(LazyIndexableInfo).GetHashCode() ^ _indexTypes.GetHashCode();
+            return typeof(LazyIndexableInfo).FullName.GetHashCode() ^ _indexTypes.GetHashCode();
         }
 
         public override string ToString() {

@@ -145,7 +145,7 @@ namespace Microsoft.PythonTools.Interpreter.Ast {
         #region Comparison
         // Equality deliberately uses unresolved members
         public override bool Equals(object obj) => GetType() == obj?.GetType() && obj is AstPythonMultipleMembers mm && new HashSet<IMember>(_members).SetEquals(mm._members);
-        public override int GetHashCode() => _members.Aggregate(GetType().GetHashCode(), (hc, m) => hc ^ (m?.GetHashCode() ?? 0));
+        public override int GetHashCode() => _members.Aggregate(GetType().FullName.GetHashCode(), (hc, m) => hc ^ (m?.GetHashCode() ?? 0));
         #endregion
 
         protected static string ChooseName(IEnumerable<string> names) => names.FirstOrDefault(n => !string.IsNullOrEmpty(n));
