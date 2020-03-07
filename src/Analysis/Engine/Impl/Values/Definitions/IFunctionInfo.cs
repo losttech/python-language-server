@@ -29,5 +29,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
     public interface IFunctionInfo2 : IFunctionInfo {
         bool IsAbstract { get; }
         IPropertyInfo Property { get; }
+        IAnalysisSet GetReturnValue(int unionStrength = 0);
+        IAnalysisSet[] GetParameterTypes(int unionStrength = 0);
     }
 }

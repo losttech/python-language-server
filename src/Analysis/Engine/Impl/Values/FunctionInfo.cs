@@ -801,7 +801,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
             }
         }
 
-        internal IAnalysisSet[] GetParameterTypes(int unionStrength = 0) {
+        public IAnalysisSet[] GetParameterTypes(int unionStrength = 0) {
             var result = new IAnalysisSet[FunctionDefinition.Parameters.Length];
             var units = new HashSet<AnalysisUnit>();
             units.Add(AnalysisUnit);
@@ -813,7 +813,7 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
                 foreach (var unit in units) {
                     if (unit != null && unit.InterpreterScope != null && unit.InterpreterScope.TryGetVariable(FunctionDefinition.Parameters[i].Name, out var param)) {
-                        result[i] = result[i].Union(param.Types);
+                        result[i] = result[i].Union(param.Types.Resolve(FunctionAnalysisUnit));
                     }
                 }
             }
@@ -821,15 +821,12 @@ namespace Microsoft.PythonTools.Analysis.Values {
             return result;
         }
 
-        internal IAnalysisSet GetReturnValue(int unionStrength = 0) {
+        public IAnalysisSet GetReturnValue(int unionStrength = 0) {
             var result = (unionStrength >= 0 && unionStrength <= UnionComparer.MAX_STRENGTH)
                 ? AnalysisSet.CreateUnion(UnionComparer.Instances[unionStrength])
                 : AnalysisSet.Empty;
 
-            var fau = AnalysisUnit as FunctionAnalysisUnit;
-            if (fau != null) {
-                result = result.Union(fau.ReturnValue.Types.Resolve(fau));
-            }
+            result = result.Union(FunctionAnalysisUnit.ReturnValue.Types.Resolve(FunctionAnalysisUnit));
 
             return result;
         }
