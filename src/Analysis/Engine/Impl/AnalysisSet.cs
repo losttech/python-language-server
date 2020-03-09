@@ -676,7 +676,7 @@ namespace Microsoft.PythonTools.Analysis {
             }
         }
 
-        [DebuggerDisplay(DebugViewProxy.DisplayString), DebuggerTypeProxy(typeof(DebugViewProxy))]
+        [DebuggerDisplay("Set: empty"), DebuggerTypeProxy(typeof(DebugViewProxy))]
         sealed class AnalysisSetEmptyObject : IAnalysisSet, IImmutableAnalysisSet {
             public static readonly IAnalysisSet Instance = new AnalysisSetEmptyObject();
 
@@ -748,7 +748,7 @@ namespace Microsoft.PythonTools.Analysis {
             public override int GetHashCode() => ((IEqualityComparer<IAnalysisSet>)Comparer).GetHashCode(this);
         }
 
-        [DebuggerDisplay(DebugViewProxy.DisplayString), DebuggerTypeProxy(typeof(DebugViewProxy))]
+        [DebuggerDisplay("Set: {Value}"), DebuggerTypeProxy(typeof(DebugViewProxy))]
         sealed class AnalysisSetOneObject : IAnalysisSet, IImmutableAnalysisSet {
             public readonly AnalysisValue Value;
 
@@ -848,7 +848,7 @@ namespace Microsoft.PythonTools.Analysis {
             public override int GetHashCode() => ((IEqualityComparer<IAnalysisSet>)Comparer).GetHashCode(this);
         }
 
-        [DebuggerDisplay(DebugViewProxy.DisplayString), DebuggerTypeProxy(typeof(DebugViewProxy))]
+        [DebuggerDisplay("Set: {Value1};{Value2}"), DebuggerTypeProxy(typeof(DebugViewProxy))]
         sealed class AnalysisSetTwoObject : IAnalysisSet, IImmutableAnalysisSet {
             public readonly AnalysisValue Value1, Value2;
 
@@ -974,7 +974,7 @@ namespace Microsoft.PythonTools.Analysis {
 
 
 
-        [DebuggerDisplay(DebugViewProxy.DisplayString), DebuggerTypeProxy(typeof(DebugViewProxy))]
+        [DebuggerDisplay("Union: empty"), DebuggerTypeProxy(typeof(DebugViewProxy))]
         sealed class AnalysisSetEmptyUnion : IAnalysisSet, IImmutableAnalysisSet {
             public static readonly IAnalysisSet[] Instances = UnionComparer.Instances.Select(cmp => new AnalysisSetEmptyUnion(cmp)).ToArray();
 
@@ -1055,7 +1055,7 @@ namespace Microsoft.PythonTools.Analysis {
             public override int GetHashCode() => Comparer.GetHashCode(this);
         }
 
-        [DebuggerDisplay(DebugViewProxy.DisplayString), DebuggerTypeProxy(typeof(DebugViewProxy))]
+        [DebuggerDisplay("Union: {Value}, {Comparer.GetType().Name,nq}"), DebuggerTypeProxy(typeof(DebugViewProxy))]
         sealed class AnalysisSetOneUnion : IAnalysisSet, IImmutableAnalysisSet {
             public readonly AnalysisValue Value;
             private readonly UnionComparer _comparer;
@@ -1180,7 +1180,7 @@ namespace Microsoft.PythonTools.Analysis {
             public override int GetHashCode() => Comparer.GetHashCode(this);
         }
 
-        [DebuggerDisplay(DebugViewProxy.DisplayString), DebuggerTypeProxy(typeof(DebugViewProxy))]
+        [DebuggerDisplay("Union: {Value1};{Value2}, {Comparer.GetType().Name,nq}"), DebuggerTypeProxy(typeof(DebugViewProxy))]
         sealed class AnalysisSetTwoUnion : IAnalysisSet, IImmutableAnalysisSet {
             public readonly AnalysisValue Value1, Value2;
             private readonly UnionComparer _comparer;
