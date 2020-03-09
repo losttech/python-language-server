@@ -342,6 +342,10 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public override IAnalysisSet GetIndex(Node node, AnalysisUnit unit, IAnalysisSet index) {
+            if (index is SliceInfo && _keyType.OnlyOneOrDefault()?.TypeId == BuiltinTypeId.Int) {
+                return this.Self;
+            }
+
             if (index.IsObjectOrUnknown() || _keyType.ContainsAny(index)) {
                 return _valueType;
             }
