@@ -802,20 +802,29 @@ namespace Microsoft.PythonTools.Analysis.Values {
         }
 
         public IAnalysisSet[] GetParameterTypes(int unionStrength = 0) {
-            var result = new IAnalysisSet[FunctionDefinition.Parameters.Length];
-            var units = new HashSet<AnalysisUnit>();
-            units.Add(AnalysisUnit);
+            var parameters = FunctionDefinition.Parameters;
+            var result = new IAnalysisSet[parameters.Length];
+            var parameterVariables = this.GetParameterVariables();
 
             for (int i = 0; i < result.Length; ++i) {
                 result[i] = unionStrength >= 0 && unionStrength <= UnionComparer.MAX_STRENGTH
                     ? AnalysisSet.CreateUnion(UnionComparer.Instances[unionStrength])
                     : AnalysisSet.Empty;
 
-                foreach (var unit in units) {
-                    if (unit != null && unit.InterpreterScope != null && unit.InterpreterScope.TryGetVariable(FunctionDefinition.Parameters[i].Name, out var param)) {
-                        result[i] = result[i].Union(param.Types.Resolve(FunctionAnalysisUnit));
-                    }
+                if (!(parameterVariables[i] is null)) {
+                    result[i] = result[i].Union(parameterVariables[i].Types.Resolve(FunctionAnalysisUnit));
                 }
+            }
+
+            return result;
+        }
+
+        internal VariableDef[] GetParameterVariables() {
+            var parameters = FunctionDefinition.Parameters;
+            var result = new VariableDef[parameters.Length];
+
+            for (int i = 0; i < result.Length; ++i) {
+                AnalysisUnit.InterpreterScope?.TryGetVariable(parameters[i].Name, out result[i]);
             }
 
             return result;

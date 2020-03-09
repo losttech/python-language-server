@@ -108,6 +108,11 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
             if (this.GetExternalAnnotationVariableDefinition() is VariableDef annotationsVariable) {
                 annotationsVariable.AddDependency(this);
+                if (annotationsVariable.Types is FunctionInfo functionInfo) {
+                    functionInfo.FunctionAnalysisUnit.ReturnValue.AddDependency(this);
+                    foreach (VariableDef parameterVariable in functionInfo.GetParameterVariables())
+                        parameterVariable?.AddDependency(this);
+                }
             }
 
             Ast.Body.Walk(ddg);
@@ -118,7 +123,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
 
         public new FunctionDefinition Ast => (FunctionDefinition)base.Ast;
 
-        public VariableDef ReturnValue => (VariableDef)((FunctionScope)Scope).ReturnValue;
+        public VariableDef ReturnValue => FunctionScope.ReturnValue;
 
         private bool ProcessAbstractDecorators(IAnalysisSet decorator) {
             var res = false;
