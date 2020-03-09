@@ -21,7 +21,7 @@ using System.Diagnostics;
 using Microsoft.PythonTools.Intellisense;
 
 namespace Microsoft.PythonTools.Analysis {
-    class Deque<T> : IEnumerable, ICollection {
+    public class Deque<T> : IEnumerable, ICollection {
         private T[] _data;
         private int _head, _tail;
         private int _itemCnt, _version;

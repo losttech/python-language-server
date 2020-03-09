@@ -822,7 +822,7 @@ namespace Microsoft.PythonTools.Analysis {
                 ReloadModulesAsync(cancel).WaitAndUnwrapExceptions();
             }
 
-            var ddg = new DDG();
+            var ddg = this.CreateDDG();
             ddg.Analyze(Queue, cancel, _reportQueueSize, _reportQueueInterval);
             foreach (ProjectEntry entry in ddg.AnalyzedEntries) {
                 entry.SetCompleteAnalysis();
@@ -830,6 +830,8 @@ namespace Microsoft.PythonTools.Analysis {
         }
 
         #endregion
+
+        protected virtual DDG CreateDDG() => new DDG();
 
         /// <summary>
         /// Specifies a callback to invoke to provide feedback on the number of

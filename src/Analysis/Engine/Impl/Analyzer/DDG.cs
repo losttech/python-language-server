@@ -25,7 +25,7 @@ using Microsoft.PythonTools.Analysis.Values;
 using Microsoft.PythonTools.Parsing.Ast;
 
 namespace Microsoft.PythonTools.Analysis.Analyzer {
-    internal class DDG : PythonWalker {
+    public class DDG : PythonWalker {
         internal AnalysisUnit _unit;
         internal ExpressionEvaluator _eval;
         private SuiteStatement _curSuite;
@@ -108,7 +108,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             _filePath = GlobalScope.ProjectEntry.FilePath;
         }
 
-        public InterpreterScope Scope {
+        internal InterpreterScope Scope {
             get {
                 return _eval.Scope;
             }
@@ -117,7 +117,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             }
         }
 
-        public ModuleInfo GlobalScope => _unit.DeclaringModule;
+        internal ModuleInfo GlobalScope => _unit.DeclaringModule;
 
         public PythonAnalyzer ProjectState => _unit.State;
 
@@ -156,9 +156,9 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
         /// Gets the function which we are processing code for currently or
         /// null if we are not inside of a function body.
         /// </summary>
-        public FunctionScope CurrentFunction => CurrentContainer<FunctionScope>();
+        internal FunctionScope CurrentFunction => CurrentContainer<FunctionScope>();
 
-        public ClassScope CurrentClass => CurrentContainer<ClassScope>();
+        internal ClassScope CurrentClass => CurrentContainer<ClassScope>();
 
         private T CurrentContainer<T>() where T : InterpreterScope {
             return Scope.EnumerateTowardsGlobal.OfType<T>().FirstOrDefault();

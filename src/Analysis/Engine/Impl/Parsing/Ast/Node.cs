@@ -14,6 +14,7 @@
 // See the Apache Version 2.0 License for specific language governing
 // permissions and limitations under the License.
 
+using System;
 using System.Text;
 
 namespace Microsoft.PythonTools.Parsing.Ast {
@@ -111,6 +112,11 @@ namespace Microsoft.PythonTools.Parsing.Ast {
                 }
             }
             return leading;
+        }
+
+        public void CopySpanFrom(Node other) {
+            if (other is null) throw new ArgumentNullException(nameof(other));
+            _span = other._span;
         }
 
         #endregion
