@@ -593,6 +593,11 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             var lookupRes = _eval.Evaluate(node.Expression);
             fnScope.AddReturnTypes(node, _unit, lookupRes);
 
+            if (ProjectState.Limits.UseMirrorFunctions) {
+                var mirror = GetMirror(fnScope);
+                mirror?.AddReturnTypes(node, _unit, lookupRes);
+            }
+
             var function = fnScope.Function;
 
             var classInfo = (fnScope.OuterScope as ClassScope)?.Class;
@@ -605,10 +610,36 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     var linkedAnalysisUnit = (FunctionAnalysisUnit)linkedFunction?.AnalysisUnit;
                     var linkedScope = linkedAnalysisUnit?.Scope as FunctionScope;
                     linkedScope?.AddReturnTypes(node, _unit, lookupRes);
+
+                    if (ProjectState.Limits.UseMirrorFunctions && linkedScope != null) {
+                        var linkedMirror = GetMirror(linkedScope);
+                        linkedMirror?.AddReturnTypes(node, _unit, lookupRes);
+                    }
                 }
             }
             return true;
         }
+
+        static FunctionScope? GetMirror(FunctionScope function) {
+            if (function is null) throw new ArgumentNullException(nameof(function));
+
+            var classInfo = (function.OuterScope as ClassScope)?.Class;
+            if (classInfo is null) return null;
+
+            string mirrorName = GetMirror(function.Function.Name);
+            if (mirrorName is null) return null;
+
+            if (!classInfo.Scope.TryGetVariable(mirrorName, out var mirrorVariable)) return null;
+            var mirror = mirrorVariable.Types as FunctionInfo;
+            return mirror?.FunctionAnalysisUnit.Scope as FunctionScope;
+        }
+
+        static string? GetMirror(string name) => name switch {
+            "__eq__" => "__ne__", "__ne__" => "__eq__",
+            "__le__" => "__ge__", "__ge__" => "__le__",
+            "__lt__" => "__gt__", "__gt__" => "__lt__",
+            _ => null,
+        };
 
         public override bool Walk(WithStatement node) {
             foreach (var item in node.Items) {

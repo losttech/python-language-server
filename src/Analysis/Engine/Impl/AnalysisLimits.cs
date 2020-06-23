@@ -208,5 +208,11 @@ namespace Microsoft.PythonTools.Analysis {
         /// When analysis is requested to be cancelled, complete current pass.
         /// </summary>
         public bool InterruptAnalysisAtPassBoundary { get; set; }
+
+        /// <summary>
+        /// Assume parameters and return values of mirror functions to be same
+        /// (e.g. <c>__eq__</c> and <c>__ne__</c>).
+        /// </summary>
+        public bool UseMirrorFunctions { get; set; }
     }
 }
