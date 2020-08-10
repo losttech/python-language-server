@@ -298,6 +298,9 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     }
                 }
 
+                foreach(var annotationProvider in ProjectEntry.ProjectState.ParameterAnnotationProviders)
+                    annotationValue ??= annotationProvider.GetAnnotation(this, p);
+
                 if (annotationValue?.Any() == true) {
                     AddParameterTypes(p.Name, annotationValue, overwrite: overwriteWithAnnotations);
                 }
@@ -322,6 +325,8 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
                     ddg.SetCurrentUnit(this);
                 }
             }
+            foreach (var annotationProvider in ProjectEntry.ProjectState.ReturnsAnnotationProviders)
+                ann ??= annotationProvider.GetAnnotation(this);
 
             if (ann != null) {
                 var resType = ann;

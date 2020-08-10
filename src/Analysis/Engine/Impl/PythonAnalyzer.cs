@@ -63,6 +63,13 @@ namespace Microsoft.PythonTools.Analysis {
         private AnalysisLimits _limits = AnalysisLimits.GetDefaultLimits();
         private Dictionary<IProjectEntry[], AggregateProjectEntry> _aggregates = new Dictionary<IProjectEntry[], AggregateProjectEntry>(AggregateComparer.Instance);
 
+        #region Extensions
+        public ICollection<IParameterAnnotationProvider> ParameterAnnotationProviders =
+            new List<IParameterAnnotationProvider>();
+        public ICollection<IReturnsAnnotationProvider> ReturnsAnnotationProviders =
+            new List<IReturnsAnnotationProvider>();
+        #endregion
+
         /// <summary>
         /// Creates a new analyzer that is ready for use.
         /// </summary>
