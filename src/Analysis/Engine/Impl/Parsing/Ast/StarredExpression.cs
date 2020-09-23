@@ -33,6 +33,7 @@ namespace Microsoft.PythonTools.Parsing.Ast {
             if (walker.Walk(this)) {
                 Expression.Walk(walker);
             }
+            walker.PostWalk(this);
         }
 
         internal override string CheckAssign() {
