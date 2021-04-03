@@ -430,11 +430,15 @@ namespace Microsoft.PythonTools.Analysis.AnalysisSetDetails {
                     // merging values has changed the one we should store, so
                     // replace it.
                     var newHc = comparer.GetHashCode(newKey) & Int32.MaxValue;
+#if DEBUG
                     if (newHc != buckets.Buckets[index].HashCode) {
                         // The hash code should not change, but if it does, we
                         // need to keep things consistent
+                        int existingHash = comparer.GetHashCode(existingKey);
+                        int keyHash = comparer.GetHashCode(existingKey);
                         Debug.Fail("Hash code changed when merging AnalysisValues");
                     }
+#endif
                     Thread.MemoryBarrier();
                     buckets.Buckets[index].Key = _removed;
                     buckets.Count -= 1;
