@@ -25,7 +25,7 @@ using Microsoft.PythonTools.Interpreter;
 using Microsoft.PythonTools.Parsing.Ast;
 
 namespace Microsoft.PythonTools.Analysis.Values {
-    internal class ClassInfo : AnalysisValue, IClassInfo, IHasRichDescription, IHasQualifiedName {
+    internal class ClassInfo : AnalysisValue, IClassInfo2, IHasRichDescription, IHasQualifiedName {
         private AnalysisUnit _analysisUnit;
         private IAnalysisSet[] _bases = Array.Empty<IAnalysisSet>();
         internal Mro _mro;

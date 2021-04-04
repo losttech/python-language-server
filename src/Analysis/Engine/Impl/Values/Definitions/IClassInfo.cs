@@ -27,4 +27,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
         IInstanceInfo Instance { get; }
         IClassScope Scope { get; }
     }
+
+    public interface IClassInfo2 : IClassInfo {
+        void SetBases(IEnumerable<IAnalysisSet> bases);
+    }
 }
