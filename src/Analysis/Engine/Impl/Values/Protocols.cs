@@ -253,6 +253,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
         public override IAnalysisSet GetEnumeratorTypes(Node node, AnalysisUnit unit) => _yielded;
         public IAnalysisSet Item => _yielded;
 
+        public override string Name => "iterable";
+
         public override IEnumerable<KeyValuePair<string, string>> GetRichDescription() {
             if (_yielded.Any()) {
                 yield return new KeyValuePair<string, string>(WellKnownRichDescriptionKinds.Misc, "[");
@@ -778,6 +780,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         public override IDictionary<string, IAnalysisSet> GetAllMembers(IModuleContext moduleContext, GetMemberOptions options = GetMemberOptions.None)
             => _actualType.GetAllMembers(moduleContext, options);
+
+        public override string Name => "list";
     }
 
     /// <summary>
