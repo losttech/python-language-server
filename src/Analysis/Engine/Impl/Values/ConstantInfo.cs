@@ -21,7 +21,7 @@ using Microsoft.PythonTools.Parsing;
 using Microsoft.PythonTools.Parsing.Ast;
 
 namespace Microsoft.PythonTools.Analysis.Values {
-    internal class ConstantInfo : BuiltinInstanceInfo {
+    internal class ConstantInfo : BuiltinInstanceInfo, IConstantInfo {
         private readonly object _value;
         private readonly BuiltinInstanceInfo _builtinInfo;
         private readonly PythonMemberType _memberType;
