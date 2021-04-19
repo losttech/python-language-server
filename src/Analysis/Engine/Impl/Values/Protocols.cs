@@ -289,6 +289,8 @@ namespace Microsoft.PythonTools.Analysis.Values {
 
         IAnalysisSet IItemContainerInfo.Item => _yielded;
 
+        public override string Name => "iterator";
+
         protected override void EnsureMembers(IDictionary<string, IAnalysisSet> members) {
             if (Self.DeclaringModule?.Tree?.LanguageVersion.Is3x() ?? true) {
                 members["__next__"] = MakeMethod("__next__", _yielded);
