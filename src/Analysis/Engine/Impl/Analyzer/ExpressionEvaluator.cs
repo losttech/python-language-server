@@ -98,6 +98,9 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             // don't care about the result.
             Evaluate(annotation);
 
+            if (annotation is MemberExpression member)
+                AnalysisLog.Add("AnnotationDoesNotSupportMemberExpressions", member.Name);
+
             return new TypeAnnotation(_unit.State.LanguageVersion, annotation)
                 .GetValue(new ExpressionEvaluatorAnnotationConverter(this, annotation, _unit))
                 ?.GetInstanceType() ?? AnalysisSet.Empty;
