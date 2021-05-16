@@ -276,7 +276,7 @@ namespace Microsoft.PythonTools.Analysis.Analyzer {
             IVariableDefinition param;
             var annotationAnalysis = GetExternalAnnotationAnalysisUnit() as FunctionAnalysisUnit;
             var functionAnnotation = annotationAnalysis?.Function.FunctionDefinition;
-            if (functionAnnotation?.Parameters.Length != Ast.Parameters.Length) {
+            if (functionAnnotation != null && functionAnnotation.Parameters.Length != Ast.Parameters.Length) {
                 AnalysisLog.Add("AnnotationParameterCountMismatch", Scope.Name, Scope.OuterScope.Name);
                 functionAnnotation = null;
             }
