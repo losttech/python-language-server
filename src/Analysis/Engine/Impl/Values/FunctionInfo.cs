@@ -213,13 +213,16 @@ namespace Microsoft.PythonTools.Analysis.Values {
                 return;
             }
 
-            var perParamNewTypes = FunctionDefinition.Parameters.Skip(1 /* self */).Select(p => {
-                string parameterName = p.Name;
-                var parameter = ((FunctionScope)_analysisUnit.Scope).GetParameter(parameterName);
-                var newTypes = parameter.Types;
-                return (parameterName, newTypes,
-                    @lock: parameter.IsLocked && ProjectState.Limits.PropagateParameterTypeToBaseMethods);
-            }).ToArray();
+            var perParamNewTypes = FunctionDefinition.Parameters
+                .Skip(1 /* self */)
+                .Where(p => !string.IsNullOrEmpty(p.Name))
+                .Select(p => {
+                    string parameterName = p.Name;
+                    var parameter = ((FunctionScope)_analysisUnit.Scope).GetParameter(parameterName);
+                    var newTypes = parameter.Types;
+                    return (parameterName, newTypes,
+                        @lock: parameter.IsLocked && ProjectState.Limits.PropagateParameterTypeToBaseMethods);
+                }).ToArray();
 
             // this block adds about 25% to execution time
             // it can be optimized by limiting propagation:
